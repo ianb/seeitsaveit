@@ -1,0 +1,1 @@
+{"http://localhost:8080/static/facebook1.js": [{"function": "scrape", "url-regex": ["https?://(www\\.)?facebook\\.com"], "require": ["jquery"], "name": "Scrape updates from Facebook", "js": "http://localhost:8080/static/facebook1.js"}]}

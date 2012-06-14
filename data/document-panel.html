@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Saved document</title>
+    <style type="text/css">
+
+body {
+  font-family: sans-serif;
+}
+
+#option-list li, #consumer-list li {
+  list-style: none;
+  display: block;
+  padding: 4px;
+}
+
+#option-list li:hover, #consumer-list li:hover {
+  background-color: #333;
+  cursor: pointer;
+}
+
+#result {
+  border: 2px solid #000;
+}
+
+    </style>
+  </head>
+  <body>
+
+    <div id="collecting" style="display: none">Loading options...</div>
+
+    <div id="processing" style="display: none">Processing...</div>
+
+    <div id="no-options" style="display: none">There are no scrapers available for this URL</div>
+
+    <ul id="option-list" style="display: none"></ul>
+
+    <ul id="consumer-list" style="display: none"></ul>
+
+    <div id="preview" style="display: none">
+      <div id="preview-display"></div>
+    </div>
+
+    <iframe id="evaluator" style="display: none"></iframe>
+
+    <pre id="result" style="display: none"></pre>
+
+    <div id="consumer-response"></div>
+
+  </body>
+</html>
