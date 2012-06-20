@@ -1,36 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Make a scraper!</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-    <script src="esprima/esprima.js"></script>
-    <script src="develop-new.js"></script>
-    <link href="develop-new.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
     <style>
-
-body {
-  font-family: sans-serif;
-}
-
-#iframe {
-  width: 100%;
-  height: 90%;
-}
-
-#main-table td {
-  height: 100%;
-  width: 50%;
-  vertical-align: top;
-}
-
+      body {
+        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+      }
     </style>
+    <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+    <title>Make a scraper!</title>
+    <link href="develop-new.css" rel="stylesheet">
   </head>
   <body>
 
-    <table style="width: 100%;" id="main-table">
-      <tr>
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="#">Dev.Scrape</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li class="active"><a href="#">1</a></li>
+              <li><a href="#about">2</a></li>
+              <li><a href="#contact">3</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
 
-        <td style="width: 50%">
+
+<div class="row">
+  <div class="span6" style="padding: 0.3em">
           Script:<br>
           <textarea id="script" style="width: 100%; height: 10em">/*
 @function scrape
@@ -43,22 +49,52 @@ function scrape(callback) {
   callback({ok: true});
 }
 </textarea>
-          <button id="execute" type="button">Execute!</button>
-          <button id="webxray" type="button">XRay</button>
-          <pre id="script-output" style="display: none"></pre><br>
+          <div id="button-set">
+          <button id="execute" class="btn" type="button">Execute!</button>
+          <button id="webxray" class="btn" type="button">XRay</button>
+          </div>
 
-          Classes: <select id="selectors"></select><br>
-          <input type="text" id="showselector" style="width: 100%"><br>
+          <div id="script-output-container" class="alert alert-block" style="display: none">
+            <a class="close" data-dismiss="alert" href="#">&times;</a>
+            <pre id="script-output"></pre>
+          </div>
+
+          <div class="form-inline">
+            <label for="selectors">Classes:</label> <select id="selectors"></select>
+          </div>
+          <div>
+            <input type="text" id="showselector" class="input-large"><br>
+          </div>
           <div id="aboutselector"></div>
         </td>
 
-        <td style="width: 50%">
+  </div>
+  <div class="span6">
           <div id="url">URL</div>
-          <iframe src="blank.html" id="iframe" style="height: 90%"></iframe>
-        </td>
+          <iframe src="blank.html" id="iframe" style="width: 100%; height: 90%"></iframe>
+  </div>
+</div>
 
-      </tr>
-    </table>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="bootstrap/js/bootstrap.js"></script>
+<!--
+    <script src="bootstrap/js/bootstrap-transition.js"></script>
+    <script src="bootstrap/js/bootstrap-alert.js"></script>
+    <script src="bootstrap/js/bootstrap-modal.js"></script>
+    <script src="bootstrap/js/bootstrap-dropdown.js"></script>
+    <script src="bootstrap/js/bootstrap-scrollspy.js"></script>
+    <script src="bootstrap/js/bootstrap-tab.js"></script>
+    <script src="bootstrap/js/bootstrap-tooltip.js"></script>
+    <script src="bootstrap/js/bootstrap-popover.js"></script>
+    <script src="bootstrap/js/bootstrap-button.js"></script>
+    <script src="bootstrap/js/bootstrap-collapse.js"></script>
+    <script src="bootstrap/js/bootstrap-carousel.js"></script>
+    <script src="bootstrap/js/bootstrap-typeahead.js"></script>
+-->
+
+    <script src="esprima/esprima.js"></script>
+    <script src="develop-new.js"></script>
 
   </body>
 </html>

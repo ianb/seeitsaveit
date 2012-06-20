@@ -12,7 +12,11 @@ window.addEventListener("message", function (event) {
         _CONTAINER.postMessage("scriptresult:" + JSON.stringify(result), "*");
       });
     } catch (e) {
-      _CONTAINER.postMessage("scriptresult:" + JSON.stringify({error: e, stack: e.stack}));
+      var result = {error: e+''};
+      if (e.stack) {
+        result.stack = e.stack.replace(/data:.*:/, '<script>:');
+      }
+      _CONTAINER.postMessage("scriptresult:" + JSON.stringify(result), "*");
     }
   } else if (event.data.substr(0, 'showselector:'.length) == 'showselector:') {
     //_CONTAINER.postMessage('selector:{"showing":".foo","subclasses":[],"els":[]}', "*");
@@ -121,7 +125,7 @@ function serializeElement(el) {
   }
   s += '>';
   if (! voidElements[el.tagName]) {
-    s += s.innerHTML + '</' + el.tagName + '>';
+    s += el.innerHTML + '</' + el.tagName + '>';
   }
   return s;
 }

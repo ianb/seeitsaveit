@@ -46,7 +46,7 @@ function executeScript() {
   try {
     esprima.parse(s);
   } catch (e) {
-    showResult({parseError: e+''});
+    showResult({error: e+''});
     return;
   }
   setDocument(null, s);
@@ -56,12 +56,30 @@ function executeScript() {
   });
 }
 
-function showXray() {
-  setDocument(null, {url: "http://webxray.hackasaurus.org/webxray.js"});
+function showResult(data) {
+  if (data.error) {
+    var alertClass = 'alert-error';
+    var display = data.error;
+    if (data.stack) {
+      display += '\n' + data.stack;
+    }
+    var label = "Error:";
+  } else {
+    var alertClass = 'alert-success';
+    display = JSON.stringify(data, null, '  ');
+    var label = "Result:";
+  }
+  $('.executable').remove();
+  var alert = $('<div class="executable alert alert-block"></div>').alert().addClass(alertClass);
+  alert.append($('<a class="close" data-dismiss="alert" href="#">&times;</a>'));
+  alert.append($('<span class="alert-heading"></span>').text(label));
+  var pre = $('<pre class="pre-scrollable"></pre>').text(display);
+  alert.append(pre);
+  $('#button-set').after(alert);
 }
 
-function showResult(data) {
-  $('#script-output').show().text(JSON.stringify(data, null, '  '));
+function showXray() {
+  setDocument(null, {url: "http://webxray.hackasaurus.org/webxray.js"});
 }
 
 function activateShowSelector(value) {
@@ -82,11 +100,11 @@ console.log('all goo showing', data);
     div.append($('<span></span>').text(data.error));
     return;
   }
-  div.append($('<span class="label">Count: </span>')).append(
+  div.append($('<span>Count: </span>')).append(
     $('<span id="aboutcount"></span>').text(data.count)).append(
     $('<br>'));
-  if (data.subclasses) {
-    div.append($('<span class="label">Subclasses:</span>'));
+  if (data.subclasses && data.subclasses.length) {
+    div.append($('<span>Subclasses:</span>'));
     var ul = $('<ul></ul>');
     div.append(ul);
     data.subclasses.forEach(function (cls) {
@@ -99,11 +117,11 @@ console.log('all goo showing', data);
       });
     });
   }
-  var prev = $('<button type="button">\u2190</button>');
-  var next = $('<button type="button">\u2192</button>');
-  var position = $('<span></span>');
+  var prev = $('<button style="margin-right: 3px" class="btn btn-mini btn-inverse">\u2190</button>');
+  var next = $('<button class="btn btn-mini btn-inverse">\u2192</button>');
+  var position = $('<span style="padding-left: 1em"></span>');
   div.append(prev).append(next).append(position).append($('<br>'));
-  var preview = $('<div style="font-family: monospace"></div>');
+  var preview = $('<div class="preview"></div>');
   div.append(preview);
   var index = 0;
   prev.click(function () {
@@ -132,6 +150,7 @@ console.log('all goo showing', data);
 }
 
 $(function () {
+  var xraying = false;
   $('#execute').click(function () {
     executeScript();
   });
@@ -142,9 +161,16 @@ $(function () {
     activateShowSelector(this.value);
   });
   $('#webxray').click(function () {
-    showXray();
+    xraying = ! xraying;
+    if (xraying) {
+      $('#webxray').button('toggle');
+      showXray();
+    } else {
+      $('#webxray').button('toggle');
+      setDocument(null);
+    }
   });
-  $('table').height($(document).height());
+  $('#iframe').height($(document).height());
 });
 
 function setClasses(classes) {
