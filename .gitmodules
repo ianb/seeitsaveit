@@ -1,0 +1,3 @@
+[submodule "server/static/esprima"]
+	path = server/static/esprima
+	url = https://github.com/ariya/esprima.git

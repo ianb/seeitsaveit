@@ -199,6 +199,12 @@ function staticHTML(el) {
   if (el.tagName == 'CANVAS') {
     return '<IMG SRC="' + htmlQuote(el.toDataURL('image/png')) + '">';
   }
+  var replSrc = null;
+  if (el.tagName == 'IFRAME') {
+    // FIXME: need to add <base> element
+    var html = staticHTML(el.contentWindow.document.documentElement);
+    replSrc = encodeData('text/html', html);
+  }
   var s = '<' + el.tagName;
   var attrs = el.attributes;
   if (attrs && attrs.length) {
@@ -208,7 +214,9 @@ function staticHTML(el) {
       if (name.substr(0, 2).toLowerCase() == "on") {
         continue;
       }
-      if (name == "href" || name == "src" || name == "value") {
+      if (name == 'src' && replSrc) {
+        var value = replSrc;
+      } else if (name == "href" || name == "src" || name == "value") {
         var value = el[name];
       } else {
         var value = attrs[i].nodeValue;
@@ -217,6 +225,15 @@ function staticHTML(el) {
     }
   }
   s += '>';
+  s += staticChildren(el);
+  if (l || ! voidElements[el.tagName]) {
+    s += '</' + el.tagName + '>';
+  }
+  return s;
+}
+
+function staticChildren(el) {
+  var s = '';
   var children = el.childNodes;
   var l = children.length;
   for (var i=0; i<l; i++) {
@@ -231,20 +248,21 @@ function staticHTML(el) {
       s += staticHTML(child);
     }
   }
-  if (l || ! voidElements[el.tagName]) {
-    s += '</' + el.tagName + '>';
-  }
   return s;
 }
 
+function encodeData(content_type, data) {
+  // FIXME: utf8?
+  return 'data:' + content_type + ';base64,' + btoa(data);
+}
 
 self.port.on("ReceiveDocument", function (message) {
   var start = Date.now();
   // unsafeWindow is quite a bit faster than the proxied access:
   self.port.emit("SerializedDocument", {
     location: location.href,
-    head: staticHTML(unsafeWindow.document.head),
-    body: staticHTML(unsafeWindow.document.body)
+    head: staticChildren(unsafeWindow.document.head),
+    body: staticChildren(unsafeWindow.document.body)
   });
   console.log("serializing took " + (Date.now() - start) + " milliseconds");
 });

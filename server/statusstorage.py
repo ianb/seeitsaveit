@@ -15,7 +15,7 @@ class StatusStorage(object):
         self.dir = dir
         if not os.path.exists(dir):
             os.makedirs(dir)
-        self.data_fn = os.path.join(dir, 'consumers.json')
+        self.data_fn = os.path.join(dir, 'statuses.json')
 
     @wsgify
     def __call__(self, req):
@@ -24,7 +24,7 @@ class StatusStorage(object):
         if req.path_info == '/':
             return self.homepage(req)
         if req.path_info == '/post':
-            self.post(req)
+            return self.post(req)
         return exc.HTTPNotFound()
 
     def description(self, base_url):
@@ -48,13 +48,24 @@ class StatusStorage(object):
             json.dump(value, fp)
 
     def post(self, req):
+        if req.method != 'POST':
+            return exc.HTTPMethodNotAllowed(allow='POST')
         data = self.data
-        print 'body', repr(req.body)
-        data.append(req.json)
+        body = req.json
+        import pprint; pprint.pprint(body)
+        if body.get('count') != 'plural':
+            status = [body['status']]
+        else:
+            status = body['status']
+        data.extend(status)
         self.data = data
-        return Response('Saved, thank you!')
+        result = self.success_template.substitute(url=req.application_url + '/')
+        return Response(result)
 
-    homepage_template = tempita.HTMLTemplate("""
+    success_template = tempita.HTMLTemplate("""\
+Saved! <a target="_blank" href="{{ url }}">view results</a>""")
+
+    homepage_template = tempita.HTMLTemplate("""\
 <!DOCTYPE html>
 <html>
 <head>
@@ -69,7 +80,7 @@ There are no updates
 {{else}}
 
 <ul>
-{{for item in data}}
+{{for item in reversed(data)}}
 <li>
   {{if item.get('profilePic') }}
     <img src="{{item['profilePic']}}">

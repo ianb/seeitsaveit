@@ -8,15 +8,19 @@ body {
   font-family: sans-serif;
 }
 
-#option-list li, #consumer-list li {
-  list-style: none;
-  display: block;
-  padding: 4px;
+a {
+  text-decoration: none;
+  color: #99f;
 }
 
-#option-list li:hover, #consumer-list li:hover {
-  background-color: #333;
-  cursor: pointer;
+a:hover {
+  text-decoration: underline;
+}de
+
+#option-list li, #consumer-list li {
+  list-style: none;
+  margin: 4px;
+  padding: 0;
 }
 
 #result {
@@ -31,21 +35,32 @@ body {
 
     <div id="processing" style="display: none">Processing...</div>
 
-    <div id="no-options" style="display: none">There are no scrapers available for this URL</div>
+    <div id="options" style="display: none">
+      Select a scraper:
 
-    <ul id="option-list" style="display: none"></ul>
+      <ul id="option-list"></ul>
 
-    <ul id="consumer-list" style="display: none"></ul>
+      Or <a href="#develop" id="develop">develop a scraper...</a>
+    </div>
 
     <div id="preview" style="display: none">
       <div id="preview-display"></div>
     </div>
 
-    <iframe id="evaluator" style="display: none"></iframe>
+    <div id="result" style="display: none">
+      Results (JSON):
+      <pre id="result-json"></pre>
+    </div>
 
-    <pre id="result" style="display: none"></pre>
+    <div id="consumers" style="display: none">
+      Where do you want to send your data?
+      <ul id="consumer-list"></ul>
+    </div>
 
-    <div id="consumer-response"></div>
+    <div id="consumer-response">
+      Result:
+      <pre id="consumer-response-data"></pre>
+    </div>
 
   </body>
 </html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Make a scraper!</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="esprima/esprima.js"></script>
+    <script src="develop-new.js"></script>
+    <link href="develop-new.css" rel="stylesheet">
+    <style>
+
+body {
+  font-family: sans-serif;
+}
+
+#iframe {
+  width: 100%;
+  height: 90%;
+}
+
+#main-table td {
+  height: 100%;
+  width: 50%;
+  vertical-align: top;
+}
+
+    </style>
+  </head>
+  <body>
+
+    <table style="width: 100%;" id="main-table">
+      <tr>
+
+        <td style="width: 50%">
+          Script:<br>
+          <textarea id="script" style="width: 100%; height: 10em">/*
+@function scrape
+@require jquery
+@name Do Something Neat
+@type what-does-this-produce
+*/
+
+function scrape(callback) {
+  callback({ok: true});
+}
+</textarea>
+          <button id="execute" type="button">Execute!</button>
+          <button id="webxray" type="button">XRay</button>
+          <pre id="script-output" style="display: none"></pre><br>
+
+          Classes: <select id="selectors"></select><br>
+          <input type="text" id="showselector" style="width: 100%"><br>
+          <div id="aboutselector"></div>
+        </td>
+
+        <td style="width: 50%">
+          <div id="url">URL</div>
+          <iframe src="blank.html" id="iframe" style="height: 90%"></iframe>
+        </td>
+
+      </tr>
+    </table>
+
+  </body>
+</html>
