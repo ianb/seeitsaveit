@@ -17,6 +17,7 @@ function setDocument(doc, extraScript) {
   var head = '<base href="' + doc.location + '">\n';
   head += '<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>';
   head += '<script src="http://localhost:8080/static/develop-iframe.js"></script>\n';
+  head += '<link rel="stylesheet" href="http://localhost:8080/static/develop-iframe.css">\n';
   if (extraScript) {
     if (extraScript.url) {
       head += '<script src="' + extraScript.url + '"></script>';
@@ -141,10 +142,10 @@ console.log('all goo showing', data);
     return false;
   });
   function showPreview() {
-  console.log('showing', index, 'of', data.els.length);
     position.text((index+1) + '/' + data.els.length);
     var el = data.els[index];
     preview.text(el);
+    iwindow().postMessage('highlight:' + JSON.stringify({selector: data.showing, index: index}), "*");
   }
   showPreview();
 }

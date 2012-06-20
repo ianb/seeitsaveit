@@ -6,6 +6,7 @@ window.addEventListener("message", function (event) {
   _CONTAINER = event.source;
   _CONTAINER.postMessage('test', "*");
   if (event.data == "scrape") {
+    highlight();
     try {
       scrape(function (result) {
         console.log('sending', result);
@@ -19,11 +20,15 @@ window.addEventListener("message", function (event) {
       _CONTAINER.postMessage("scriptresult:" + JSON.stringify(result), "*");
     }
   } else if (event.data.substr(0, 'showselector:'.length) == 'showselector:') {
+    highlight();
     //_CONTAINER.postMessage('selector:{"showing":".foo","subclasses":[],"els":[]}', "*");
     var selector = event.data.substr('showselector:'.length);
     var result = getSelectorInfo(selector);
     //console.log('sending data', JSON.stringify(result), _CONTAINER);
     _CONTAINER.postMessage('selector:' + JSON.stringify(result), "*");
+  } else if (event.data.substr(0, 'highlight:'.length) == 'highlight:') {
+    var selector = JSON.parse(event.data.substr('highlight:'.length));
+    highlight(selector);
   } else if (event.data == "hello") {
     _CONTAINER.postMessage("classes:" + JSON.stringify(getAllClasses()), "*");
   }
@@ -128,6 +133,24 @@ function serializeElement(el) {
     s += el.innerHTML + '</' + el.tagName + '>';
   }
   return s;
+}
+
+var highlighted = null;
+
+function highlight(selector) {
+  if (highlighted) {
+    highlighted.className = highlighted.className.replace(/\s*develop-highlight/, '');
+    highlighted = null;
+  }
+  if (! selector) {
+    return;
+  }
+  var els = document.querySelectorAll(selector.selector);
+  var el = els[selector.index];
+  el.className += ' develop-highlight';
+  console.log('making el', el.className);
+  el.scrollIntoView(false);
+  highlighted = el;
 }
 
 console.log('develop-iframe loaded');
