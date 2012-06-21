@@ -6,31 +6,31 @@ self.port.on("Scrapers", function (scrapers) {
     var li = document.createElement('li');
     li.innerHTML = 'There are no pre-built options available';
     el.appendChild(li);
-    return;
-  }
-  var el = show('options', 'option-list');
+  } else {
+    var el = show('options', 'option-list');
 
-  scrapers.forEach(function (scraper) {
-    var li = document.createElement('li');
-    var button = document.createElement('button');
-    button.setAttribute('type', 'button');
-    li.appendChild(button);
-    if (scraper.icon) {
-      var img = document.createElement('img');
-      img.src = scraper.icon;
-      button.appendChild(img);
-    }
-    var name = scraper.name || scraper.js;
-    button.appendChild(document.createTextNode(name));
-    button.addEventListener('click', function () {
-      show('processing');
-      self.port.emit("ScraperChosen", scraper);
-    }, false);
-    el.appendChild(li);
-  });
+    scrapers.forEach(function (scraper) {
+      var li = document.createElement('li');
+      var button = document.createElement('button');
+      button.setAttribute('type', 'button');
+      li.appendChild(button);
+      if (scraper.icon) {
+        var img = document.createElement('img');
+        img.src = scraper.icon;
+        button.appendChild(img);
+      }
+      var name = scraper.name || scraper.js;
+      button.appendChild(document.createTextNode(name));
+      button.addEventListener('click', function () {
+        show('processing');
+        self.port.emit("ScraperChosen", scraper);
+      }, false);
+      el.appendChild(li);
+    });
+  }
 
   if (! developBound) {
-    developBound = true;
+    //developBound = true;
     getElement('develop').addEventListener('click', function () {
       self.port.emit("Develop");
     }, false);

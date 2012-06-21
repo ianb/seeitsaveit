@@ -5,6 +5,7 @@ function iwindow() {
 }
 
 function setDocument(doc, extraScript) {
+  stopXray();
   if (doc) {
     DOC = doc;
   } else if (! DOC) {
@@ -15,6 +16,7 @@ function setDocument(doc, extraScript) {
   }
   var location = doc.location;
   var head = '<base href="' + doc.location + '">\n';
+  head += '<meta charset="UTF-8">\n';
   head += '<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>';
   head += '<script src="http://localhost:8080/static/develop-iframe.js"></script>\n';
   head += '<link rel="stylesheet" href="http://localhost:8080/static/develop-iframe.css">\n';
@@ -33,7 +35,6 @@ function setDocument(doc, extraScript) {
   $('#iframe').load(function () {
     iwindow().postMessage('hello', "*");
   });
-  $('#url').text(location);
 }
 
 function encodeData(content_type, data) {
@@ -79,8 +80,19 @@ function showResult(data) {
   $('#button-set').after(alert);
 }
 
+var xraying = false;
+
 function showXray() {
   setDocument(null, {url: "http://webxray.hackasaurus.org/webxray.js"});
+  var xraying = true;
+}
+
+function stopXray() {
+  if (! xraying) {
+    return;
+  }
+  $('#webxray').button('toggle');
+  xraying = false;
 }
 
 function activateShowSelector(value) {
@@ -92,8 +104,11 @@ function activateShowSelector(value) {
   iwindow().postMessage('showselector:' + value, "*");
 }
 
+function cmp(a, b) {
+  return a < b ? -1 : (a > b ? 1 : 0);
+}
+
 function showSelector(data) {
-console.log('all goo showing', data);
   $('#showcselector').val(data.showing);
   var div = $('#aboutselector');
   div.empty();
@@ -105,6 +120,7 @@ console.log('all goo showing', data);
     $('<span id="aboutcount"></span>').text(data.count)).append(
     $('<br>'));
   if (data.subclasses && data.subclasses.length) {
+    data.subclasses.sort(function (a, b) {return -cmp(a.count, b.count) || cmp(a.name, b.name);});
     div.append($('<span>Subclasses:</span>'));
     var ul = $('<ul></ul>');
     div.append(ul);
@@ -171,7 +187,7 @@ $(function () {
       setDocument(null);
     }
   });
-  $('#iframe').height($(document).height());
+  $('#iframe').height($(document).height()-68);
 });
 
 function setClasses(classes) {
