@@ -18,6 +18,7 @@ try:
 except ImportError:
     import json
 from statusstorage import StatusStorage
+from develop import DevelopApp
 
 
 def parse_metadata(script, url):
@@ -94,6 +95,7 @@ class Application(object):
                 os.path.dirname(os.path.abspath(__file__)),
                 'static'))
         self.status_capture = StatusStorage(os.path.join(dir, 'status'))
+        self.develop_app = DevelopApp(os.path.join(dir, 'develop'))
 
     @wsgify
     def __call__(self, req):
@@ -105,6 +107,9 @@ class Application(object):
             return self.register(req)
         if req.path_info == '/register-consumer':
             return self.register_consumer(req)
+        if req.path_info_peek() == 'develop':
+            req.path_info_pop()
+            return self.develop_app
         if req.path_info_peek() == 'static':
             req.path_info_pop()
             return self.directory_app
