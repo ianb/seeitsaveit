@@ -1,3 +1,4 @@
+import os
 from webob.dec import wsgify
 from webob import exc
 from webob import Response
@@ -31,27 +32,34 @@ class DevelopApp(object):
         if req.path_info_peek() == 'api':
             return self.api(req)
         else:
+            if req.path_info == '/':
+                # index file
+                req.path_info += 'index.html'
             return self.static_app
 
     @wsgify
     def api(self, req):
         if req.path_info == '/api/auth':
             return self.auth(req)
+        return exc.HTTPNotFound()
 
     def sign(self, email):
         return hmac.new(self.secret, email, hashlib.sha1).hexdigest()
 
     def auth(self, req):
         assertion = req.body
-        r = urllib.urlopen('https://browserid.org/verify', assertion)
+        data = 'assertion=%s&audience=%s' % (
+            urllib.quote(assertion),
+            urllib.quote(req.scheme + '://' + req.host))
+        r = urllib.urlopen('https://browserid.org/verify', data)
         r = json.load(r)
-        if r['status'] == 'ok':
+        if r['status'] == 'okay':
             data = {
                 'status': 'ok',
                 'email': r['email'],
                 'signed': self.sign(r['email']),
                 }
-            resp = Response(json={'status': 'ok'})
+            resp = Response(json={'status': 'okay'})
             resp.set_cookie('auth', urllib.quote(json.dumps(data)))
             return resp
         else:

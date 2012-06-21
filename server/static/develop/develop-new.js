@@ -52,7 +52,6 @@ function executeScript() {
     return;
   }
   setDocument(null, s);
-  console.log('sending data');
   $('#iframe').load(function () {
     iwindow().postMessage("scrape", "*");
   });
@@ -167,7 +166,7 @@ function showSelector(data) {
 }
 
 $(function () {
-  var xraying = false;
+  console.log('setting up onload');
   $('#execute').click(function () {
     executeScript();
   });
@@ -188,7 +187,57 @@ $(function () {
     }
   });
   $('#iframe').height($(document).height()-68);
+  $('#login').bind('click', loginClicked);
+  setAuth();
 });
+
+var authUser = null;
+
+function setAuth() {
+  var value = null;
+  var ca = document.cookie.split(';');
+  for (var i=0; i<ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0)==' ') {
+      c = c.substring(1,c.length);
+    }
+    if (c.indexOf("auth") == 0) {
+      value = c.substring(5,c.length);
+    }
+  }
+  if (! value) {
+    return;
+  }
+  value = JSON.parse(unescape(value));
+  var email = value.email;
+  authUser = email;
+  $('#login').text(email);
+}
+
+function loginClicked() {
+  if (authUser) {
+    document.cookie = "auth=;path=/;";
+    $('#login').text('login');
+    return false;
+  }
+  navigator.id.get(function (assertion) {
+    if (! assertion) {
+      return;
+    }
+    $.ajax({
+      type: 'POST',
+      url: '/develop/api/auth',
+      data: assertion,
+      success: function (resp, status, req) {
+        setAuth();
+      },
+      error: function (resp, status, req) {
+        console.log('Got error', resp);
+      }
+    });
+  });
+  return false;
+}
 
 function setClasses(classes) {
   var sorted = [];
@@ -236,5 +285,3 @@ function getRest(string, prefix) {
   }
   return JSON.parse(string.substr(prefix.length));
 }
-
-console.log('added event listener');
