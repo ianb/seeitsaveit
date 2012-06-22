@@ -1,4 +1,5 @@
 var DOC = null;
+var REGISTER = 'http://localhost:8080/register';
 
 function iwindow() {
   return $('#iframe')[0].contentWindow;
@@ -15,6 +16,8 @@ function setDocument(doc, extraScript) {
     doc = DOC;
   }
   var location = doc.location;
+  doc.domain = getDomain(location);
+  $('#url').text(location);
   var head = '<base href="' + doc.location + '">\n';
   head += '<meta charset="UTF-8">\n';
   head += '<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>';
@@ -189,6 +192,8 @@ $(function () {
   $('#iframe').height($(document).height()-68);
   $('#login').bind('click', loginClicked);
   setAuth();
+  $('#saver').bind('click', saveClicked);
+  $('#register').bind('click', registerClicked);
 });
 
 var authUser = null;
@@ -231,12 +236,54 @@ function loginClicked() {
       success: function (resp, status, req) {
         setAuth();
       },
-      error: function (resp, status, req) {
-        console.log('Got error', resp);
+      error: function (req, status, error) {
+        console.log('Got error', req, status, error);
       }
     });
   });
   return false;
+}
+
+function scriptURL() {
+  return location.protocol + '//' + location.host + '/develop/api/scripts/' +
+    encodeURIComponent(authUser) + '/' + encodeURIComponent(DOC.domain) + '.js';
+}
+
+function saveClicked() {
+  if (! authUser) {
+    $('#saver').text('Save (must log in)');
+    return false;
+  }
+  $('#saver').text('Saving...').addClass('active');
+  $.ajax({
+    type: 'PUT',
+    url: scriptURL(),
+    data: $('#script').val(),
+    success: function (resp, status, req) {
+      $('#saver').text('Save').removeClass('active');
+    },
+    error: function (req, status, error) {
+      console.log('Error in PUT to', scriptURL(), 'status:', status, 'error:', error);
+      $('#saver').text('Save failed').removeClass('active');
+    }
+  });
+  return false;
+}
+
+function registerClicked() {
+  $('#register').text('Registering...').addClass('active');
+  $.ajax({
+    type: 'POST',
+    url: REGISTER,
+    data: scriptURL(),
+    success: function (resp, status, req) {
+      $('#register').text('Registered').removeClass('active');
+    },
+    error: function (req, status, error) {
+      $('#register').text('Register failed').removeClass('active');
+      console.log('Error in POST to', REGISTER, 'status:', status, 'error:', error);
+    }
+  });
 }
 
 function setClasses(classes) {
@@ -284,4 +331,11 @@ function getRest(string, prefix) {
     return null;
   }
   return JSON.parse(string.substr(prefix.length));
+}
+
+function getDomain(url) {
+  url = url.replace(/^https?:\/+/i, '');
+  url = url.replace(/\/.*$/, '');
+  url = url.replace(/:.*$/, '');
+  return url.toLowerCase();
 }

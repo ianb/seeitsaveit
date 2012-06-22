@@ -2,7 +2,7 @@ import os
 from webob.dec import wsgify
 from webob import exc
 from webob import Response
-from webob.static import DirectoryApp
+from webob.static import DirectoryApp, FileApp
 import urllib
 try:
     import simplejson as json
@@ -17,7 +17,7 @@ class DevelopApp(object):
     def __init__(self, dir):
         if not os.path.exists(dir):
             os.makedirs(dir)
-        self.dir = dir
+        self.dir = os.path.normcase(os.path.abspath(dir))
         self.static_app = DirectoryApp(os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
                 'static/develop'))
@@ -41,6 +41,8 @@ class DevelopApp(object):
     def api(self, req):
         if req.path_info == '/api/auth':
             return self.auth(req)
+        if req.path_info.startswith('/api/scripts'):
+            return self.script_store(req)
         return exc.HTTPNotFound()
 
     def sign(self, email):
@@ -64,3 +66,46 @@ class DevelopApp(object):
             return resp
         else:
             return Response(json=r)
+
+    def get_script_filename(self, email, scriptname):
+        path = os.path.join(self.dir,
+                            urllib.quote(email, ''),
+                            urllib.quote(scriptname, ''))
+        path = os.path.normcase(os.path.abspath(path))
+        if not path.startswith(self.dir):
+            raise Exception('Bad path: %r (does not start with %r)' % (path, self.dir))
+        return path
+
+    def script_store(self, req):
+        prefix = '/api/scripts'
+        assert req.path_info.startswith(prefix)
+        path_parts = req.path_info[len(prefix):].strip('/').split('/', 1)
+        email = path_parts[0]
+        name = path_parts[1]
+        filename = self.get_script_filename(email, name)
+        if req.method == 'PUT':
+            user = self.get_user(req)
+            if not user or email != user['email']:
+                return exc.HTTPForbidden()
+            if not os.path.exists(os.path.dirname(filename)):
+                os.makedirs(os.path.dirname(filename))
+            with open(filename, 'wb') as fp:
+                fp.write(req.body)
+            return exc.HTTPNoContent()
+        elif req.method == 'GET':
+            if not os.path.exists(filename):
+                return exc.HTTPNotFound()
+            return FileApp(filename)
+        else:
+            return exc.HTTPMethodNotAllow(allow='POST,GET')
+
+    def get_user(self, req):
+        cookie = req.cookies.get('auth')
+        if not cookie:
+            return None
+        data = json.loads(urllib.unquote(cookie))
+        sig = self.sign(data['email'])
+        if sig != data['signed']:
+            print 'Bad signature on data:', data
+            return None
+        return data
