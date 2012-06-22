@@ -146,11 +146,22 @@ class Application(object):
         if req.GET.get('consumer'):
             return self.query_consumer(req)
         url = req.GET.get('url')
+        url_domain = urlparse.urlsplit(url).netloc.lower().split(':')[0]
         matches = []
         transformers = self.transformers
         for key, all_data in transformers.iteritems():
             for func_data in all_data:
                 done = False
+                domains = func_data.get('domain', [])
+                if isinstance(domains, basestring):
+                    domains = [domains]
+                for domain in domains:
+                    if url_domain == domain:
+                        matches.append(func_data)
+                        done = True
+                        break
+                if done:
+                    continue
                 urls = func_data.get('urls', [])
                 if isinstance(urls, basestring):
                     urls = [urls]

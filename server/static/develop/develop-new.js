@@ -1,6 +1,28 @@
 var DOC = null;
 var REGISTER = 'http://localhost:8080/register';
 
+var DEFAULT_SCRIPT = (
+'/*\n' +
+'@function scrape\n' +
+'@require jquery\n' +
+'@name Do Something Neat\n' +
+'@domain DOMAIN.COM\n' +
+'@type what-does-this-produce\n' +
+'*/\n' +
+'\n' +
+'function scrape(callback) {\n' +
+'  callback({ok: true});\n' +
+'}\n'
+);
+
+function renderDefaultScript() {
+  if (DOC) {
+    return DEFAULT_SCRIPT.replace('DOMAIN.COM', DOC.domain);
+  } else {
+    return DEFAULT_SCRIPT;
+  }
+}
+
 function iwindow() {
   return $('#iframe')[0].contentWindow;
 }
@@ -17,6 +39,7 @@ function setDocument(doc, extraScript) {
   }
   var location = doc.location;
   doc.domain = getDomain(location);
+  checkServerScript();
   $('#url').text(location);
   var head = '<base href="' + doc.location + '">\n';
   head += '<meta charset="UTF-8">\n';
@@ -38,6 +61,21 @@ function setDocument(doc, extraScript) {
   $('#iframe').load(function () {
     iwindow().postMessage('hello', "*");
   });
+  if (doc.js) {
+    console.log('getting JS from', doc.js);
+    $.ajax({
+      url: doc.js,
+      type: 'GET',
+      success: function (resp) {
+        $('#script').val(resp);
+      },
+      error: function (req, status, error) {
+        console.log('Error loading script', doc.js, 'error:', error);
+      }
+    });
+  } else if ($('#script').val() == DEFAULT_SCRIPT) {
+    $('#script').val(renderDefaultScript());
+  }
 }
 
 function encodeData(content_type, data) {
@@ -194,6 +232,11 @@ $(function () {
   setAuth();
   $('#saver').bind('click', saveClicked);
   $('#register').bind('click', registerClicked);
+  $('#load-keep').click(loadKeepClicked);
+  $('#load-overwrite').click(loadOverwriteClicked);
+  if (! $('#script').val()) {
+    $('#script').val(DEFAULT_SCRIPT);
+  }
 });
 
 var authUser = null;
@@ -215,14 +258,47 @@ function setAuth() {
   }
   value = JSON.parse(unescape(value));
   var email = value.email;
-  authUser = email;
   $('#login').text(email);
+  authUser = email;
+  checkServerScript();
+}
+
+function checkServerScript() {
+  if (authUser && DOC) {
+    $.ajax({
+      url: scriptURL(),
+      type: "GET",
+      success: function (resp, status, req) {
+        if ($('#script').val() == DEFAULT_SCRIPT
+            || $('#script').val() == renderDefaultScript()) {
+          $('#script').val(resp);
+        } else if (resp != $('#script').val()) {
+          $('#load-domain').text(DOC.domain);
+          $('#load-data').text(resp);
+          $('#load-question').modal();
+        }
+      },
+      error: function (req, status, error) {
+        // do nothing
+      }
+    });
+  }
+}
+
+function loadKeepClicked() {
+  $('#load-question').modal('hide');
+}
+
+function loadOverwriteClicked() {
+  $('#script').val($('#load-data').text());
+  $('#load-question').modal('hide');
 }
 
 function loginClicked() {
   if (authUser) {
     document.cookie = "auth=;path=/;";
     $('#login').text('login');
+    authUser = null;
     return false;
   }
   navigator.id.get(function (assertion) {

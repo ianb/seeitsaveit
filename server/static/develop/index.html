@@ -43,17 +43,7 @@
 <div class="row">
   <div class="span6" style="padding: 0.3em">
           Script: <span id="url"></span><br>
-          <textarea id="script" style="width: 100%; height: 10em">/*
-@function scrape
-@require jquery
-@name Do Something Neat
-@type what-does-this-produce
-*/
-
-function scrape(callback) {
-  callback({ok: true});
-}
-</textarea>
+          <textarea id="script" style="width: 100%; height: 10em"></textarea>
           <div id="button-set">
           <button id="execute" class="btn" type="button">Execute!</button>
           <button id="webxray" class="btn" type="button">XRay</button>
@@ -76,6 +66,21 @@ function scrape(callback) {
   </div>
   <div class="span6" style="padding: 0">
           <iframe src="blank.html" id="iframe" style="width: 100%; height: 90%"></iframe>
+  </div>
+</div>
+
+<div id="load-question" class="modal hide">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">×</button>
+    <h3>Load script?</h3></div>
+  <div class="modal-body">
+    You already have a script available for the domain <span id="load-domain"></span>.
+    Do you want to keep what you have, or load the new script?
+    <pre id="load-data" class="pre-scrollable"></pre>
+  </div>
+  <div class="modal-footer">
+    <button id="load-keep" class="btn">Keep what I have</button>
+    <button id="load-overwrite" class="btn btn-primary">Load the saved script</button>
   </div>
 </div>
 

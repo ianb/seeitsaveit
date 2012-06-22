@@ -25,6 +25,14 @@ self.port.on("Scrapers", function (scrapers) {
         show('processing');
         self.port.emit("ScraperChosen", scraper);
       }, false);
+      var anchor = document.createElement('a');
+      anchor.href = '#';
+      anchor.className = 'develop-script';
+      anchor.innerHTML = 'develop';
+      anchor.addEventListener('click', function () {
+        self.port.emit("Develop", {js: scraper.js});
+      });
+      li.appendChild(anchor);
       el.appendChild(li);
     });
   }
@@ -32,7 +40,7 @@ self.port.on("Scrapers", function (scrapers) {
   if (! developBound) {
     //developBound = true;
     getElement('develop').addEventListener('click', function () {
-      self.port.emit("Develop");
+      self.port.emit("Develop", null);
     }, false);
   }
 

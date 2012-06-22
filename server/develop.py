@@ -62,7 +62,7 @@ class DevelopApp(object):
                 'signed': self.sign(r['email']),
                 }
             resp = Response(json={'status': 'okay'})
-            resp.set_cookie('auth', urllib.quote(json.dumps(data)))
+            resp.set_cookie('auth', urllib.quote(json.dumps(data)), max_age=60*60*24*365*10)
             return resp
         else:
             return Response(json=r)

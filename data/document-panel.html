@@ -8,14 +8,30 @@ body {
   font-family: sans-serif;
 }
 
+#dialog {
+  color: #fff;
+}
+
 a {
   text-decoration: none;
   color: #99f;
 }
 
+a:visited {
+  color: #99f;
+}
+
+.develop-script {
+  padding-left: 0.5em;
+}
+
 a:hover {
   text-decoration: underline;
-}de
+}
+
+#option-list, #consumer-list {
+  padding: 0;
+}
 
 #option-list li, #consumer-list li {
   list-style: none;
@@ -30,6 +46,8 @@ a:hover {
     </style>
   </head>
   <body>
+
+<div id="dialog">
 
     <div id="collecting" style="display: none">Loading options...</div>
 
@@ -61,6 +79,8 @@ a:hover {
       Result:
       <pre id="consumer-response-data"></pre>
     </div>
+
+</div>
 
   </body>
 </html>
