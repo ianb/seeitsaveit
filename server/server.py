@@ -221,7 +221,12 @@ class Application(object):
             url = req.body
         else:
             url = req.params['url']
-        data = json.load(urllib.urlopen(url))
+        body = urllib.urlopen(url).read()
+        try:
+            data = json.loads(body)
+        except ValueError:
+            print 'Bad data for url %r: %s' % (url, body)
+            raise
         data['post'] = urlparse.urljoin(url, data['post'])
         data['url'] = url
         consumers = self.consumers

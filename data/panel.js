@@ -10,7 +10,7 @@ self.port.on("Scrapers", function (scrapers) {
       var li = make('li');
       var button = make('button', {'type': 'button'},
         [(scraper.icon ? make('img', {src: scraper.icon}) : null),
-         name]);
+         scraper.name]);
       button.addEventListener('click', function () {
         show('processing');
         self.port.emit("ScraperChosen", scraper);
@@ -19,6 +19,7 @@ self.port.on("Scrapers", function (scrapers) {
       anchor.addEventListener('click', function () {
         self.port.emit("Develop", {js: scraper.js});
       });
+      li.appendChild(button);
       li.appendChild(anchor);
       el.appendChild(li);
     });
@@ -37,10 +38,10 @@ self.port.on("Collect", function () {
   show("collecting");
 });
 
-self.port.on("Consumers", function (consumers) {
+self.port.on("Consumers", function (consumers, dataType) {
   var el = show('consumers', 'consumer-list');
   if (! consumers.length) {
-    el.appendChild(make('li', null, ['No consumers!']));
+    el.appendChild(make('li', null, ['No consumers for type ' + dataType]));
     return;
   }
   consumers.forEach(function (consumer) {
@@ -52,6 +53,7 @@ self.port.on("Consumers", function (consumers) {
       show('processing');
       self.port.emit("ConsumerChosen", consumer);
     }, false);
+    li.appendChild(button);
     el.appendChild(li);
   });
 });
@@ -110,9 +112,9 @@ function make(tag, attrs, children) {
     for (var i=0; i<children.length; i++) {
       var child = children[i];
       if (child === null || child === undefined) {
-        // do nothing
+        continue;
       } else if (typeof child == "string") {
-        el.appendChild(document.createTextElement(child));
+        el.appendChild(document.createTextNode(child));
       } else {
         el.appendChild(child);
       }

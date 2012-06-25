@@ -29,9 +29,9 @@ class StatusStorage(object):
 
     def description(self, base_url):
         return dict(
-            name="Simple global storage for status updates",
+            name="Simple global storage for lots of data",
             post=base_url + '/post',
-            types=['status-update'],
+            types=['status', 'song'],
             count='*',
             )
 
@@ -53,14 +53,25 @@ class StatusStorage(object):
         data = self.data
         body = req.json
         import pprint; pprint.pprint(body)
-        if body.get('count') != 'plural':
-            status = [body['status']]
-        else:
-            status = body['status']
-        data.extend(status)
+        items = self.explode_items(body, ['status', 'song'])
+        data.extend(items)
         self.data = data
         result = self.success_template.substitute(url=req.application_url + '/')
         return Response(result)
+
+    def explode_items(self, data, keys):
+        result = []
+        for key in keys:
+            if not data.get(key):
+                continue
+            items = data[key]
+            if not isinstance(items, (list, tuple)):
+                items = [items]
+            for item in items:
+                item['type'] = key
+                item['location'] = data['location']
+                result.append(item)
+        return result
 
     success_template = tempita.HTMLTemplate("""\
 Saved! <a target="_blank" href="{{ url }}">view results</a>""")
@@ -76,12 +87,13 @@ Saved! <a target="_blank" href="{{ url }}">view results</a>""")
 <h1>Status Updates From Everywhere</h1>
 
 {{if not data}}
-There are no updates
+There are no items
 {{else}}
 
 <ul>
 {{for item in reversed(data)}}
 <li>
+ {{if item['type'] == 'status'}}
   {{if item.get('profilePic') }}
     <img src="{{item['profilePic']}}">
   {{endif}}
@@ -90,6 +102,17 @@ There are no updates
   {{endif}}
   at {{item.get('date')}}:
   {{item.get('bodyHTML')}}
+
+ {{elif item['type'] == 'song'}}
+  {{item.get('title')}} by {{item.get('artist')}}
+  {{if item.get('album')}}
+    in {{item['album']}}
+  {{endif}}
+
+ {{else}}
+  Unknown item:
+  <pre>{{item}}</pre>
+ {{endif}}
 </li>
 {{endfor}}
 </ul>

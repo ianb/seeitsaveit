@@ -10,7 +10,7 @@ jQuery.fn.collect = function (callback) {
   return result;
 };
 
-jQuery.fn.strip = function (text) {
+jQuery.strip = jQuery.fn.strip = function (text) {
   if (text === undefined && this.text) {
     text = this.text();
   }
@@ -19,6 +19,14 @@ jQuery.fn.strip = function (text) {
     return null;
   }
   return text;
+};
+
+jQuery.reverse = function (list) {
+  var n = [];
+  for (var i=list.length-1; i>= 0; i--) {
+    n.push(list[i]);
+  }
+  return n;
 };
 
 jQuery.fn.getlink = function () {
