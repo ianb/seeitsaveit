@@ -179,7 +179,15 @@ class Application(object):
                     if re.match(url_regex, url):
                         matches.append(func_data)
                         break
-        return Response(json={"matches": matches})
+        result = {'scrapers': matches}
+        types = set(item['type'] for item in matches if item.get('type'))
+        consumers = []
+        for type in types:
+            for consumer in self.consumers.itervalues():
+                if type in consumer['types']:
+                    consumers.append(consumer)
+        result['consumers'] = consumers
+        return Response(json=result)
 
     @wsgify
     def query_consumer(self, req):
@@ -187,7 +195,7 @@ class Application(object):
         consumers = self.consumers
         matches = []
         for url, consumer in self.consumers.iteritems():
-            for type in consumer['types']:
+            if type in consumer['types']:
                 matches.append(consumer)
         return Response(json={'matches': matches})
 

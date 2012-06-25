@@ -39,10 +39,6 @@ a:hover {
   padding: 0;
 }
 
-#result {
-  border: 2px solid #000;
-}
-
     </style>
   </head>
   <body>
@@ -65,11 +61,6 @@ a:hover {
       <div id="preview-display"></div>
     </div>
 
-    <div id="result" style="display: none">
-      Results (JSON):
-      <pre id="result-json"></pre>
-    </div>
-
     <div id="consumers" style="display: none">
       Where do you want to send your data?
       <ul id="consumer-list"></ul>
@@ -78,6 +69,11 @@ a:hover {
     <div id="consumer-response">
       Result:
       <pre id="consumer-response-data"></pre>
+    </div>
+
+    <div id="error-message">
+      <h1>There was an error:</h1>
+      <div id="error-message-text"></div>
     </div>
 
 </div>

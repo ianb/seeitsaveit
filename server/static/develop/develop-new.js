@@ -86,14 +86,17 @@ function encodeData(content_type, data) {
 
 function executeScript() {
   var s = $('#script').val();
+  console.log('executing', s);
   try {
     esprima.parse(s);
   } catch (e) {
     showResult({error: e+''});
     return;
   }
+  console.log('reseting iframe');
   setDocument(null, s);
   $('#iframe').load(function () {
+    console.log('sending scrape');
     iwindow().postMessage("scrape", "*");
   });
 }

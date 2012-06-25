@@ -1,34 +1,21 @@
 var developBound = false;
 
 self.port.on("Scrapers", function (scrapers) {
+  var el = show('options', 'option-list');
   if (! scrapers.length) {
-    var el = show('options', 'option-list');
-    var li = document.createElement('li');
-    li.innerHTML = 'There are no pre-built options available';
-    el.appendChild(li);
+    el.appendChild(
+      make('li', null, ['There are no pre-built options available']));
   } else {
-    var el = show('options', 'option-list');
-
     scrapers.forEach(function (scraper) {
-      var li = document.createElement('li');
-      var button = document.createElement('button');
-      button.setAttribute('type', 'button');
-      li.appendChild(button);
-      if (scraper.icon) {
-        var img = document.createElement('img');
-        img.src = scraper.icon;
-        button.appendChild(img);
-      }
-      var name = scraper.name || scraper.js;
-      button.appendChild(document.createTextNode(name));
+      var li = make('li');
+      var button = make('button', {'type': 'button'},
+        [(scraper.icon ? make('img', {src: scraper.icon}) : null),
+         name]);
       button.addEventListener('click', function () {
         show('processing');
         self.port.emit("ScraperChosen", scraper);
       }, false);
-      var anchor = document.createElement('a');
-      anchor.href = '#';
-      anchor.className = 'develop-script';
-      anchor.innerHTML = 'develop';
+      var anchor = make('a', {href: '#', 'class': 'develop-script'}, 'develop');
       anchor.addEventListener('click', function () {
         self.port.emit("Develop", {js: scraper.js});
       });
@@ -38,17 +25,12 @@ self.port.on("Scrapers", function (scrapers) {
   }
 
   if (! developBound) {
-    //developBound = true;
+    developBound = true;
     getElement('develop').addEventListener('click', function () {
       self.port.emit("Develop", null);
     }, false);
   }
 
-});
-
-self.port.on("Result", function (result) {
-  var el = show("result", "result-json");
-  el.appendChild(document.createTextNode(JSON.stringify(result, null, '  ')));
 });
 
 self.port.on("Collect", function () {
@@ -57,23 +39,15 @@ self.port.on("Collect", function () {
 
 self.port.on("Consumers", function (consumers) {
   var el = show('consumers', 'consumer-list');
-  el.innerHTML = '';
   if (! consumers.length) {
-    el.innerHTML = '<li>No consumers!</li>';
+    el.appendChild(make('li', null, ['No consumers!']));
     return;
   }
   consumers.forEach(function (consumer) {
-    var li = document.createElement('li');
-    var button = document.createElement('button');
-    button.setAttribute('type', 'button');
-    li.appendChild(button);
-    if (consumer.icon) {
-      var img = consumer.createElement('img');
-      img.src = consumer.icon;
-      button.appendChild(img);
-    }
-    var name = consumer.name || consumer.url;
-    button.appendChild(document.createTextNode(name));
+    var li = make('li');
+    var button = make('button', {'type': 'button'},
+      [(consumer.icon ? make('img', {src: consumer.icon}) : null),
+       consumer.name || consumer.url]);
     button.addEventListener('click', function () {
       show('processing');
       self.port.emit("ConsumerChosen", consumer);
@@ -88,8 +62,13 @@ self.port.on("ConsumerResponse", function (response) {
   el.innerHTML = response;
 });
 
+self.port.on("Error", function (message) {
+  var el = show("error-message", "error-message-text");
+  make(el, null, [message]);
+});
+
 function show(id, inner) {
-  ['processing', 'options', 'preview', 'result',
+  ['processing', 'options', 'preview', 'error-message',
    'collecting', 'consumers', 'consumer-response'].forEach(function (name) {
     var el = getElement(name);
     el.style.display = 'none';
@@ -110,6 +89,34 @@ function getElement(id) {
   var el = document.getElementById(id);
   if (! el) {
     throw 'No element by the id ' + id + ' found';
+  }
+  return el;
+}
+
+function make(tag, attrs, children) {
+  var el;
+  if (typeof tag != "string") {
+    // We're clearing/replacing an existing element
+    el = tag;
+  } else {
+    el = document.createElement(tag);
+  }
+  if (attrs) {
+    for (var i in attrs) {
+      el.setAttribute(i, attrs[i]);
+    }
+  }
+  if (children) {
+    for (var i=0; i<children.length; i++) {
+      var child = children[i];
+      if (child === null || child === undefined) {
+        // do nothing
+      } else if (typeof child == "string") {
+        el.appendChild(document.createTextElement(child));
+      } else {
+        el.appendChild(child);
+      }
+    }
   }
   return el;
 }
