@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>SeeItSaveIt</title>
+  <script src="develop/bootstrap/js/bootstrap.js"></script>
+  <link href="develop/bootstrap/css/bootstrap.css" rel="stylesheet">
+  <link href="static/homepage.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 60px;
+    }
+  </style>
+ </head>
+ <body>
+
+<div class="navbar navbar-fixed-top">
+ <div class="navbar-inner">
+  <div class="container">
+   <a href="/" class="brand">SeeItSaveIt</a>
+  </div>
+ </div>
+</div>
+
+<div class="row span12">
+
+<div> SeeItSaveIt is an Addon for Firefox that extracts structured
+information from web pages, and sends it to services that can use that
+data.  It does this using ad hoc, user-contributed scripts.  </div>
+
+<div> To get started <a class="btn btn-primary"
+href="/static/seeitsaveit.xpi">install the Addon</a></div>
+
+<h1>A Manifesto</h1>
+
+<div>
+
+  I want to tell you why I think this project is important.  If you
+  are thinking "should I try this out" then this is probably a much
+  more long-winded and abstract discussion than would make sense.  But
+  if you are asking "is this important" or "is this the right
+  approach" I hope my arguments will help you make those
+  determinations.
+
+</div>
+
+<h2>Why?</h2>
+
+<div>
+
+  Have you heard the refrain <em>users should own their own data</em>?
+  Unfortunately this advocacy takes the form of begging: begging
+  services to open up data, begging users to care in enough numbers to
+  make that happen and to exercise those options in ways that will
+  make them protect and force maintenance of that open data in the
+  future.
+
+</div>
+
+<div>
+
+  But we don't need to be beggars for this data.  The data
+  is <em>already there</em> &mdash; everything you can see in your
+  browser is data that can be read, extracted, and understood.  It's
+  not always easy to extract this data, but it's possible, and usually
+  it's not very hard; it requires some expertise but that expertise
+  can be shared with everyone.
+
+</div>
+
+<div>
+
+  Of course we already extract data regularly from our web browsing.
+  The URL is the easiest piece of data to pass around, and we pass
+  this location identifier around so other people can see what we can
+  see.  But things at a URL can change &mdash; pages disappear, are
+  edited, represent streams of updates that are always changing, are
+  customized for individual users, are only available to subscribers
+  or inside private networks.  Sometimes a URL is exactly the right
+  thing to share, or the right thing to save with a bookmark; but
+  often it's not the <em>address</em> that we want to work with, it's
+  the <em>actual data we see on the screen</em>.
+
+</div>
+
+<div>
+
+  Web sites can protect and change the pages at any one URL, but when
+  you <em>see something</em> on the screen, that data is in your
+  hands, it is literally located on your computer.  <strong>It's your
+  data &mdash; if you are willing to take hold of it!</strong>
+
+</div>
+
+<div>
+
+  <i>SeeItSaveIt</i> lets you take hold of that data.  It extracts
+  structured information.  So while you might see article text, user
+  names, contact information, etc. on your screen, the meaning of each
+  piece of text is not clear to the computer.  And the data isn't
+  nearly as useful if the computer can't understand it.  You want to
+  throw away the useless information &mdash; ads, hints about how to
+  use the site, branding, etc.  You want to mark that data according
+  to what it is.  Once you have that, there's unlimited ways of using
+  that information.
+
+</div>
+
+<div>
+
+  And what do you do with the data once you've extracted it?  You
+  probably don't personally have a way to use structured but abstract
+  data.  But the data is given a <em>type</em>, and we can search for
+  other services that can use that type of data, or you can find such
+  services yourself or, if you are a developer, develop such services.
+  As an example, contact information might go to a contact manager, or
+  be used to recreate friend networks on other services, or might be
+  archived for research purposes, or might be correlated with
+  information you've collected elsewhere.
+
+</div>
+
+<h2>Why Ad Hoc Extraction?</h2>
+
+<div>
+
+  This tool relies on individual users to write and maintain scripts
+  to extract the structure from web pages.  The structure of pages
+  on <span class="monospace">http://facebook.com</span> is different
+  from the structure of pages
+  on <span class="monospace">http://wikipedia.org</span>.  There's no
+  standard way to represent different kinds of structured information.
+  Or maybe there's <em>too many</em> standard ways.
+
+</div>
+
+<div>
+
+  But then, shouldn't we build a standard way?  It's been tried before
+  (<a href="http://en.wikipedia.org/wiki/Microformat">Microformats</a>,
+  <a href="http://en.wikipedia.org/wiki/Resource_Description_Framework">RDF</a>,
+  <a href="http://en.wikipedia.org/wiki/Facebook_Platform#Open_Graph_protocol">Open
+  Graph Protocol</a>).  If you look at those links, you'll notice I
+  linked to Wikipedia in each case, even though they each have an
+  "official" page.  Why is Wikipedia so often a better reference
+  location for a concept than a self-controlled and branded page?
+  Because we (in the largest sense of "we") are usually better at
+  describing each other than we are at describing ourselves.  When I
+  describe myself, or when an institution describes itself, it can't
+  help but confuse what it <em>is</em> with <em>what it hopes to
+  be</em> or <em>what it plans to be</em>.  It's hard to be objective,
+  to be grounded in the present, and ultimately the description is
+  self-serving rather than serving the audience.
+
+</div>
+
+<div>
+
+  This is why I believe ad hoc scripts are not just the result of
+  flaws in the current system, or of poor adoption of structured
+  markup that should be fixed.  Ad hoc scripts are developed by people
+  who want to <em>do</em> something.  Their goals are functional:
+  they've found information they want to extract.  The authors of
+  these scripts are also the audience.  The validity of their process
+  is determined by the usefulness of the result.  I would go so far as
+  to say that this should be the preferred foundation of semantics
+  &mdash; knowledge structure is corrent in so far as it is useful.
+
+</div>
+
+<div>
+
+  Microformats included an important design decision that I believe
+  this builds on: data is only correct when it is visible and used.
+  If data is hidden (e.g., embedded invisibly into the structure of
+  the page) then no one is checking to make sure it is correct or
+  useful.  While Microformats use this in a prescriptive way &mdash;
+  coming to the conclusion that semantic markup must wrap visible
+  elements &mdash; SeeItSaveIt uses this concept in a descriptive way:
+  the most useful information <em>is already visible and
+  parseable</em>.
+
+</div>
+
+<h2>The Politics of Modularity</h2>
+
+<div>
+
+  SeeItSaveIt modularizes the process with three basic components:
+
+  <ol>
+
+    <li><b>The SeeItSaveIt Addon</b>: this is what finds extraction
+    scripts, and what santizes and freezes the page you are looking at
+    into something we give the extraction script.</li>
+
+    <li><b>The Extraction Script</b>: this is what takes the visible
+    page and turns it into structured data with a somewhat formal
+    "type".  This is not permitted to <em>do</em> anything with the
+    data, only to extract it.  </li>
+
+    <li><b>The Consumer</b>: this is a service that receives the
+    extracted data.  It needs to understand the structure, and
+    probably needs a personal relationship with the user.</li>
+
+  </ol>
+
+</div>
+
+<div>
+
+  There are architectural and privacy reasons for this separation, but
+  another significant reason is simple politics.  There was a time
+  when it was common to give your credentials to sites, and they would
+  log in as you and extract data or potentially do things.  There were
+  quite a few problems with this, including Terms Of Service
+  violations and services that took data users didn't realize they
+  were taking, or were just buggy and messed things up.  Once you give
+  a service access to log in as you, there's no end to what they can
+  do.  Another very substantial reason for pushback against this
+  technique is that services were using it to extract data so they
+  could directly compete (this was particularly true when there was a
+  lot of competition in the social space, something that has died
+  down) &mdash; this offended some site owners, the integration wasn't
+  symmetric, and often the competitors didn't fully clarify to users
+  what they wanted to do with that data.
+
+</div>
+
+<div>
+
+  The technique now for this kind of integration is OAuth, where one
+  service authenticates with both the user and the other site, and
+  uses published APIs to do very particular things.  With cooperative
+  sites this can be helpful, but it has some problems:
+
+  <ol>
+
+    <li> Services need permission not just from the user, but also
+    from the other site.  They can and are blocked for reasons that
+    don't relate to anything the user cares about. </li>
+
+    <li> The scope of what is made public is restricted to what seems
+    like a positive business move by the site. </li>
+
+    <li> Development happens at a pace determined by the site owners
+    and developers. </li>
+
+    <li> Integration is in many ways <em>more</em> ad hoc, because the
+    API that one site exposes is usually quite different from the API
+    another site exposes.  So while a site might integrate with
+    Twitter or Facebook, it won't be worth integrating with more minor
+    players. </li>
+
+  </ol>
+
+</div>
+
+<div>
+
+  SeeItSaveIt's modularity addresses many of these concerns:
+
+  <ol>
+
+    <li> The Addon prepares the data in a relatively safe way, so that
+    read-only is given to the extracting script.  An extraction script
+    flaw will generally just lead to corrupt extracted data, not
+    anything done to the site itself (e.g., you can't post on behalf
+    of the user, just because a script is given access to read data
+    off Facebook's site).  This can mean privacy leaks, but there are
+    ways that we can mitigate that problem as well. </li>
+
+    <li> The Addon runs <em>as</em> you, it sees exactly what you see.
+    It doesn't send a URL to a server that then tries to reproduce and
+    then extract content.  It doesn't have to ask any site's
+    permission.  Because you have to explicitly start the extraction
+    process, user concent is concretely implied. </li>
+
+    <li> The author of the extraction script is not (or at least
+    plausibly not) doing direct competition with the site.  The
+    extraction script creates neutral data that can be consumed by
+    anyone.  The data might be <em>particularly</em> useful to the
+    extraction script author, but they ultimately have to enable
+    anyone else to do useful things at the same time. </li>
+
+    <li> Consumers are the only ones who really get any data written,
+    and they only get fully extracted and baked content.  There are
+    several steps along the way where we can do auditing and
+    validation of the results, because we have neutral documents
+    instead of these components chatting with each other in
+    difficult-to-understand ways. </li>
+
+  </ol>
+
+</div>
+
+<div>
+
+  Because of these features I believe SeeItSaveIt is more politically
+  and technically palatable than previous systems where agents worked
+  on behalf of the user in a way that was indistinguishable from the
+  user.
+
+</div>
+
+<h1>Development</h1>
+
+<div>
+
+  The source is <a href="https://github.com/ianb/seeitsaveit">on
+  github</a>.  It uses the
+  <a href="https://addons.mozilla.org/en-US/developers/">Addon SDK
+  (aka Jetpack)</a>.  The source includes both the Addon and the
+  server for registration and querying of extraction scripts, and
+  development of new scripts.
+
+</div>
+
+</div> <!-- div.row.span12 -->
+
+ </body>
+</html>
