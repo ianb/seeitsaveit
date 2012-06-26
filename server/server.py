@@ -19,6 +19,7 @@ except ImportError:
     import json
 from statusstorage import StatusStorage
 from develop import DevelopApp
+import tempita
 
 
 def parse_metadata(script, url):
@@ -235,7 +236,50 @@ class Application(object):
 
     @wsgify
     def homepage(self, req):
-        return 'Not much to see right here'
+        tmpl = self.homepage_template.substitute(req=req)
+        return Response(tmpl)
+
+    homepage_template = tempita.HTMLTemplate("""\
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>SeeItSaveIt</title>
+  <script src="develop/bootstrap/js/bootstrap.js"></script>
+  <link href="develop/bootstrap/css/bootstrap.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 60px;
+    }
+  </style>
+ </head>
+ <body>
+
+<div class="navbar navbar-fixed-top">
+ <div class="navbar-inner">
+  <div class="container">
+   <a href="/" class="brand">SeeItSaveIt</a>
+  </div>
+ </div>
+</div>
+
+<div class="row span12">
+
+<div> SeeItSaveIt is an Addon for Firefox that extracts structured
+information from web pages, and sends it to services that can use that
+data.  It does this using ad hoc, user-contributed scripts.  </div>
+
+<div> To use it you may want to <a class="btn btn-primary"
+href="/static/seeitsaveit.xpi">install the Addon</a>, or check out the
+source <a href="https://github.com/ianb/seeitsaveit">from github</a>
+(it uses <a href="https://addons.mozilla.org/en-US/developers/">Addon
+SDK aka Jetpack</a>). </div>
+
+</div>
+
+ </body>
+</html>
+""")
 
 
 parser = optparse.OptionParser(
