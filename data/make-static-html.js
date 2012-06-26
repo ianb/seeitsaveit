@@ -1,4 +1,7 @@
+// Note, these are also contained in lib/quoting.js:
+
 function htmlQuote(s) {
+  /* Does minimal quoting of a string for embedding as a literal in HTML */
   if (! s) {
     return s;
   }
@@ -6,6 +9,12 @@ function htmlQuote(s) {
     return s;
   }
   return s.replace(/&/g, "&amp;").replace(/</g, '&lt;').replace(/"/g, "&quot;");
+}
+
+function encodeData(content_type, data) {
+  /* Encodes the given data as a data: URL */
+  // FIXME: utf8?
+  return 'data:' + content_type + ';base64,' + btoa(data);
 }
 
 function skipElement(el) {
@@ -28,6 +37,7 @@ function skipElement(el) {
   return false;
 };
 
+// These are elements that are empty, i.e., have no closing tag:
 const voidElements = {
   AREA: true,
   BASE: true,
@@ -80,6 +90,7 @@ const TEXT_NODE = document.TEXT_NODE;
 const ELEMENT_NODE = document.ELEMENT_NODE;
 
 function staticHTML(el) {
+  /* Converts the element to static HTML, dropping anything that isn't static */
   if (el.tagName == 'CANVAS') {
     return '<IMG SRC="' + htmlQuote(el.toDataURL('image/png')) + '">';
   }
@@ -113,14 +124,36 @@ function staticHTML(el) {
     }
   }
   s += '>';
-  s += staticChildren(el);
-  if (l || ! voidElements[el.tagName]) {
+  if (! voidElements[el.tagName]) {
+    s += staticChildren(el);
     s += '</' + el.tagName + '>';
   }
   return s;
 }
 
+function getAttributes(el) {
+  var result = [];
+  var attrs = el.attributes;
+  if (attrs && attrs.length) {
+    var l = attrs.length;
+    for (var i=0; i<l; i++) {
+      var name = attrs[i].name;
+      if (name.substr(0, 2).toLowerCase() == "on") {
+        continue;
+      }
+      if (name == "href" || name == "src" || name == "value") {
+        var value = el[name];
+      } else {
+        var value = attrs[i].nodeValue;
+      }
+      result.push([name, value]);
+    }
+  }
+  return result;
+}
+
 function staticChildren(el) {
+  /* Converts all the children of the given element to static HTML */
   var s = '';
   var children = el.childNodes;
   var l = children.length;
@@ -139,18 +172,31 @@ function staticChildren(el) {
   return s;
 }
 
-function encodeData(content_type, data) {
-  // FIXME: utf8?
-  return 'data:' + content_type + ';base64,' + btoa(data);
-}
-
 self.port.on("ReceiveDocument", function () {
   var start = Date.now();
   // unsafeWindow is quite a bit faster than the proxied access:
+  var body = unsafeWindow.document.body;
+  // Generally this only happens when the document hasn't really loaded
+  // FIXME: that maybe should be an error
+  var bodyAttrs = null;
+  if (body) {
+    body = staticChildren(body);
+    bodyAttrs = getAttributes(body);
+  }
+  var head = unsafeWindow.document.head;
+  if (head) {
+    head = staticChildren(head);
+  }
+  var htmlAttrs = null;
+  if (document.documentElement) {
+    htmlAttrs = getAttributes(document.documentElement);
+  }
   self.port.emit("SerializedDocument", {
     location: location.href,
-    head: staticChildren(unsafeWindow.document.head),
-    body: staticChildren(unsafeWindow.document.body)
+    htmlAttrs: htmlAttrs,
+    head: head,
+    body: body,
+    bodyAttrs: bodyAttrs
   });
   console.log("serializing took " + (Date.now() - start) + " milliseconds");
 });

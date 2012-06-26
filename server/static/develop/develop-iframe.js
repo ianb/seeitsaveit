@@ -1,17 +1,21 @@
 var _CONTAINER = null;
+var _LOG = [];
+var _ELEMENTS = {};
 
 window.addEventListener("message", function (event) {
   console.log('iframe received data', event.data);
   // FIXME: do proper check here
   _CONTAINER = event.source;
-  _CONTAINER.postMessage('test', "*");
   if (event.data == "scrape") {
     highlight();
+    _LOG = [];
     try {
+      // FIXME: doesn't work with return value
       scrape(function (result) {
         console.log('sending', result);
+        result['LOG'] = _LOG;
         _CONTAINER.postMessage("scriptresult:" + JSON.stringify(result), "*");
-      });
+      }, logger);
     } catch (e) {
       var result = {error: e+''};
       if (e.stack) {
@@ -29,10 +33,95 @@ window.addEventListener("message", function (event) {
   } else if (event.data.substr(0, 'highlight:'.length) == 'highlight:') {
     var selector = JSON.parse(event.data.substr('highlight:'.length));
     highlight(selector);
+  } else if (event.data == "bindclick") {
+    document.addEventListener("click", clickEvent, true);
   } else if (event.data == "hello") {
+    createElementIds();
     _CONTAINER.postMessage("classes:" + JSON.stringify(getAllClasses()), "*");
+  } else {
+    console.warn("Could not understand message", event.data);
   }
 }, false);
+
+// Also found in scraper-runner.js:
+function logger() {
+  if (arguments.length == 1) {
+    var s = arguments[0];
+  } else {
+    s = '';
+    for (var i=0; i<arguments.length; i++) {
+      if (s) {
+        s += ' ';
+      }
+      var a = arguments[i];
+      if (typeof a == "string" || typeof a == "number" || a === null) {
+        s += a;
+      } else {
+        var aJson = JSON.stringify(a);
+        if (aJson && aJson != "null") {
+          s += aJson;
+        } else {
+          s += a;
+        }
+      }
+    }
+  }
+  console.log("Log: " + s);
+  _LOG.push(s);
+}
+
+function clickEvent(event) {
+  event.stopPropagation();
+  event.preventDefault();
+  var el = event.target;
+  var result = inspectElement(el);
+  result.parents = [];
+  result.children = [];
+  var parent = el.parentNode;
+  while (parent && parent.tagName != 'BODY') {
+    result.parents.push(inspectElement(parent));
+    parent = parent.parentNode;
+  }
+  var child = el;
+  while (1) {
+    child = firstChild(child);
+    if (! child) {
+      break;
+    }
+    result.children.push(child);
+  }
+  _CONTAINER.postMessage('inspect:' + JSON.stringify(result), "*");
+  highlightEl(el);
+}
+
+function inspectElement(el) {
+  highlight();
+  var result = {
+    tagName: el.tagName,
+    id: el.id,
+    elId: el.elId,
+    classes: getClasses(el),
+    html: el.innerHTML,
+    text: $(el).text()
+  };
+  if (el.src) {
+    result.src = el.src;
+  }
+  if (el.href) {
+    result.href = el.href;
+  }
+  return result;
+}
+
+function firstChild(el) {
+  for (var i=0; i<el.childNodes.length; i++) {
+    var child = el.childNodes[i];
+    if (child && child.nodeType == document.ELEMENT_NODE) {
+      return child;
+    }
+  }
+  return null;
+}
 
 function getAllClasses() {
   var els = document.getElementsByTagName("*");
@@ -138,19 +227,45 @@ function serializeElement(el) {
 var highlighted = null;
 
 function highlight(selector) {
+  unhighlight();
+  if (! selector) {
+    return;
+  }
+  if (selector.selector) {
+    var els = document.querySelectorAll(selector.selector);
+    var el = els[selector.index];
+  } else if (selector.elId) {
+    var el = _ELEMENTS[selector.elId];
+  } else {
+    throw 'Selector not understood: ' + JSON.stringify(selector);
+  }
+  highlightEl(el);
+  el.scrollIntoView(false);
+}
+
+function unhighlight() {
   if (highlighted) {
     highlighted.className = highlighted.className.replace(/\s*develop-highlight/, '');
     highlighted = null;
   }
-  if (! selector) {
-    return;
-  }
-  var els = document.querySelectorAll(selector.selector);
-  var el = els[selector.index];
+}
+
+function highlightEl(el) {
+  unhighlight();
   el.className += ' develop-highlight';
-  console.log('making el', el.className);
-  el.scrollIntoView(false);
   highlighted = el;
+}
+
+function createElementIds() {
+  _ELEMENTS = {};
+  var els = document.getElementsByTagName("*");
+  var l = els.length;
+  var count = 1;
+  for (var i=0; i<l; i++) {
+    var id = 'el-' + (count++);
+    els[i].elId = id;
+    _ELEMENTS[id] = els[i];
+  }
 }
 
 console.log('develop-iframe loaded');

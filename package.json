@@ -1,9 +1,16 @@
 {
-    "name": "seeitsaveit", 
-    "license": "MPL 2.0", 
-    "author": "", 
-    "version": "0.1", 
-    "fullName": "SeeItSaveIt", 
-    "id": "jid1-qLu1xN6OodOpFg", 
-    "description": "a basic add-on"
+    "name": "seeitsaveit",
+    "license": "MPL 2.0",
+    "author": "Ian Bicking",
+    "version": "0.1",
+    "fullName": "SeeItSaveIt",
+    "id": "jid1-qLu1xN6OodOpFg",
+    "description": "Extracts and saves information from web pages",
+    "preferences": [{
+      "name": "serverBase",
+      "title": "Server Base URL",
+      "description": "This is where to find the query/registration server",
+      "type": "string",
+      "value": "https://seeitsaveit.vcap.mozillalabs.com/"
+    }]
 }

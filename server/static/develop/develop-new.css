@@ -3,3 +3,13 @@
     border: 1px solid #999;
     padding: 0.5em;
 }
+
+.inspector {
+    max-height: 13em;
+    overflow-y: scroll;
+}
+
+img.arrow {
+    height: 1em;
+    margin-right: 0.3em;
+}

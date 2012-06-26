@@ -233,6 +233,10 @@ class Application(object):
         consumers[url] = data
         self.consumers = consumers
 
+    @wsgify
+    def homepage(self, req):
+        return 'Not much to see right here'
+
 
 parser = optparse.OptionParser(
     usage='%prog [OPTIONS]',

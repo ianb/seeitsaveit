@@ -1,5 +1,9 @@
+var BASE = location.protocol + '//' + location.host;
 var DOC = null;
-var REGISTER = 'http://localhost:8080/register';
+var REGISTER = BASE + '/register';
+var IFRAME = BASE + '/develop/develop-iframe.js';
+var IFRAME_CSS = BASE + '/develop/develop-iframe.css';
+var JSEEITSAVEIT = BASE + '/static/jseeitsaveit.js';
 
 var DEFAULT_SCRIPT = (
 '/*\n' +
@@ -27,8 +31,13 @@ function iwindow() {
   return $('#iframe')[0].contentWindow;
 }
 
+var iframeToRemove = [];
+function iframeLoad(callback) {
+  iframeToRemove.push(callback);
+  $('#iframe').bind('load', callback);
+}
+
 function setDocument(doc, extraScript) {
-  stopXray();
   if (doc) {
     DOC = doc;
   } else if (! DOC) {
@@ -37,45 +46,87 @@ function setDocument(doc, extraScript) {
   } else {
     doc = DOC;
   }
+  console.log('setDocument(', doc.location, extraScript, ')');
   var location = doc.location;
   doc.domain = getDomain(location);
   checkServerScript();
   $('#url').text(location);
-  var head = '<base href="' + doc.location + '">\n';
-  head += '<meta charset="UTF-8">\n';
-  head += '<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>';
-  head += '<script src="http://localhost:8080/static/develop-iframe.js"></script>\n';
-  head += '<link rel="stylesheet" href="http://localhost:8080/static/develop-iframe.css">\n';
-  if (extraScript) {
-    if (extraScript.url) {
-      head += '<script src="' + extraScript.url + '"></script>';
-    } else {
-      head += '<script>' + extraScript + '</script>\n';
-    }
-  }
-  //head += '<script class="webxray" src="http://webxray.hackasaurus.org/webxray.js"></script>\n';
-  head += doc.head;
-  var page = '<html><head>' + head + '</head><body>' + doc.body + '</body></html>';
+  var page = makePage(doc, extraScript);
   var w = iwindow();
+  iframeToRemove.forEach(function (callback) {
+    $('#iframe').unbind('load', callback);
+  });
+  iframeToRemove = [];
   $('#iframe').attr('src', encodeData('text/html', page));
-  $('#iframe').load(function () {
+  iframeLoad(function () {
     iwindow().postMessage('hello', "*");
   });
   if (doc.js) {
     console.log('getting JS from', doc.js);
-    $.ajax({
-      url: doc.js,
-      type: 'GET',
-      success: function (resp) {
-        $('#script').val(resp);
-      },
-      error: function (req, status, error) {
-        console.log('Error loading script', doc.js, 'error:', error);
-      }
-    });
+    if ($('#script').val() == DEFAULT_SCRIPT) {
+      $.ajax({
+        url: doc.js,
+        type: 'GET',
+        success: function (resp) {
+          $('#script').val(resp);
+        },
+        error: function (req, status, error) {
+          console.log('Error loading script', doc.js, 'error:', error);
+        }
+      });
+    }
   } else if ($('#script').val() == DEFAULT_SCRIPT) {
     $('#script').val(renderDefaultScript());
   }
+  if (! extraScript) {
+    // FIXME: this is kind of an ad hoc way to decide this
+    iframeLoad(function () {
+      console.log('sending bindclick');
+      iwindow().postMessage("bindclick", "*");
+    });
+  }
+  inInspectHighlight = false;
+}
+
+function makePage(doc, extraScript) {
+  var head = '<base href="' + doc.location + '">\n';
+  head += '<meta charset="UTF-8">\n';
+  head += '<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>';
+  head += '<script src="' + htmlQuote(JSEEITSAVEIT) + '"></script>\n';
+  head += '<script src="' + htmlQuote(IFRAME) + '"></script>\n';
+  head += '<link rel="stylesheet" href="' + htmlQuote(IFRAME_CSS) + '">\n';
+  if (extraScript) {
+    if (extraScript.url) {
+      head += '<script src="' + htmlQuote(extraScript.url) + '"></script>\n';
+    } else {
+      head += '<script>' + extraScript + '</script>\n';
+    }
+  }
+  head += doc.head;
+  var body = doc.body;
+  return makeTag('html', doc.htmlAttrs) + '<head>' + head + '</head>' +
+    makeTag('body', doc.bodyAttrs) + body + '</body>';
+}
+
+function makeTag(tagName, attrs) {
+  var s = '<' + tagName;
+  if (attrs) {
+    for (var i=0; i<attrs.length; i++) {
+      s += ' ' + attrs[i][0] + '="' + htmlQuote(attrs[i][1]) + '"';
+    }
+  }
+  s += '>';
+  return s;
+}
+
+function htmlQuote(s) {
+  if (! s) {
+    return s;
+  }
+  if (s.search(/[&<"]/) == -1) {
+    return s;
+  }
+  return s.replace(/&/g, "&amp;").replace(/</g, '&lt;').replace(/"/g, "&quot;");
 }
 
 function encodeData(content_type, data) {
@@ -95,7 +146,7 @@ function executeScript() {
   }
   console.log('reseting iframe');
   setDocument(null, s);
-  $('#iframe').load(function () {
+  iframeLoad(function () {
     console.log('sending scrape');
     iwindow().postMessage("scrape", "*");
   });
@@ -121,21 +172,6 @@ function showResult(data) {
   var pre = $('<pre class="pre-scrollable"></pre>').text(display);
   alert.append(pre);
   $('#button-set').after(alert);
-}
-
-var xraying = false;
-
-function showXray() {
-  setDocument(null, {url: "http://webxray.hackasaurus.org/webxray.js"});
-  var xraying = true;
-}
-
-function stopXray() {
-  if (! xraying) {
-    return;
-  }
-  $('#webxray').button('toggle');
-  xraying = false;
 }
 
 function activateShowSelector(value) {
@@ -213,22 +249,13 @@ $(function () {
   console.log('setting up onload');
   $('#execute').click(function () {
     executeScript();
+    return false;
   });
   $('#selectors').change(function () {
     activateShowSelector(this.value);
   });
   $('#showselector').change(function () {
     activateShowSelector(this.value);
-  });
-  $('#webxray').click(function () {
-    xraying = ! xraying;
-    if (xraying) {
-      $('#webxray').button('toggle');
-      showXray();
-    } else {
-      $('#webxray').button('toggle');
-      setDocument(null);
-    }
   });
   $('#iframe').height($(document).height()-68);
   $('#login').bind('click', loginClicked);
@@ -386,6 +413,89 @@ function cmp(a, b) {
   return a < b ? -1 : (a > b ? 1 : 0);
 }
 
+var inInspectHighlight = false;
+
+function inspectElement(element) {
+  $(".inspector").remove();
+  var alert = $('<div class="inspector alert alert-block"></div>').alert();
+  alert.append($('<a class="close" data-dismiss="alert" href="#">&times;</a>'));
+  alert.append($('<span class="alert-heading"></span>').text("Element ").append(
+    $('<code></code>').text(element.tagName)));
+  var div = $('<div></div>');
+  alert.append(div);
+  function displayElement(element, container) {
+    var name = element.tagName;
+    if (element.classes && element.classes.length) {
+      name += '.' + element.classes.join('.');
+    }
+    if (element.id) {
+      name += '#' + element.id;
+    }
+    var code = $('<code></code>').text(name).prepend($('<img class="arrow" src="arrow-right.png">'));;
+    container.append(code);
+    code.on('click', function () {
+      var id = element.elId;
+      inInspectHighlight = true;
+      console.log('elId', element.elId+'');
+      iwindow().postMessage('highlight:' + JSON.stringify({elId: element.elId}), "*");
+    });
+    /*code.on('mouseout', function () {
+      if (inInspectHighlight) {
+        iwindow().postMessage('highlight:null', "*");
+        inInspectHighlight = false;
+      }
+    });*/
+    if (element.text) {
+      var textDiv = $('<div></div>').text('Text: ');
+      textDiv.append($('<code></code>').text(element.text.substr(0, 50))
+        .attr('title', element.text));
+      container.append(textDiv);
+    }
+    if (element.html) {
+      var htmlDiv = $('<div></div>').text('HTML: ');
+      htmlDiv.append($('<code></code>').text(element.html.substr(0, 50)).
+        attr('title', element.html));
+      container.append(htmlDiv);
+    }
+    if (element.src || element.href) {
+      var linkDiv = $('<div></div>');
+      if (element.src) {
+        var name = 'src';
+      } else {
+        var name = 'href';
+      }
+      linkDiv.text(name + '= ' + (element.src || element.href));
+      container.append(linkDiv);
+    }
+  }
+  displayElement(element, div);
+  if (element.children && element.children.length) {
+    var childDiv = $('<div></div>');
+    div.append(childDiv);
+    childDiv.append($('<h3></h3>').text('Children'));
+    var ul = $('<ul></ul>');
+    childDiv.append(ul);
+    element.children.forEach(function (child) {
+      var li = $('<li></li');
+      ul.append(li);
+      displayElement(child, li);
+    });
+  }
+  if (element.parents && element.parents.length) {
+    var parentDiv = $('<div></div>');
+    div.append(parentDiv);
+    parentDiv.append($('<h3></h3>').text('Parents'));
+    ul = $('<ul></ul>');
+    parentDiv.append(ul);
+    element.parents.forEach(function (parent) {
+      var li = $('<li></li>');
+      ul.append(li);
+      displayElement(parent, li);
+    });
+  }
+  $('#button-set').after(alert);
+}
+
 window.addEventListener("message", function (event) {
   var data = event.data;
   console.log('got message', data.substr(0, 80), event.origin);
@@ -400,6 +510,8 @@ window.addEventListener("message", function (event) {
     showSelector(result);
   } else if ((result = getRest(data, 'classes:'))) {
     setClasses(result);
+  } else if ((result = getRest(data, 'inspect:'))) {
+    inspectElement(result);
   } else {
     console.log('Could not understand message', data);
   }
