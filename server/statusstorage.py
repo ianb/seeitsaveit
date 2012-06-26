@@ -101,7 +101,7 @@ There are no items
     <a href="{{item['profileLink']}}">user</a>
   {{endif}}
   at {{item.get('date')}}:
-  {{item.get('bodyHTML')}}
+  {{item.get('body') | html}}
 
  {{elif item['type'] == 'song'}}
   {{item.get('title')}} by {{item.get('artist')}}
