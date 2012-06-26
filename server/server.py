@@ -11,7 +11,7 @@ import urllib
 import re
 from webob.dec import wsgify
 from webob import exc
-from webob import Response
+from webob import Response, Request
 from webob.static import DirectoryApp, FileApp
 try:
     import simplejson as json
@@ -100,6 +100,9 @@ class Application(object):
 
     @wsgify
     def __call__(self, req):
+        ## Hack for Petri
+        if req.host == 'seeitsaveit.vcap.mozillalabs.com' and req.scheme == 'http':
+            req.scheme = 'https'
         if req.path_info == '/query':
             return self.query(req)
         if req.path_info == '/':
@@ -202,11 +205,17 @@ class Application(object):
 
     @wsgify
     def register(self, req):
+        import sys
         if req.body.startswith('http'):
             js_url = req.body
         else:
-            js_url = req.params['url']
-        data = urllib.urlopen(js_url).read()
+            js_url = req.params.get('url')
+        if not js_url:
+            return exc.HTTPBadRequest('No url parameter provided')
+        if js_url.startswith(req.application_url):
+            data = Request.blank(js_url).get_response(self).body
+        else:
+            data = urllib.urlopen(js_url).read()
         try:
             properties = parse_metadata(data, js_url)
         except ValueError, e:
@@ -221,18 +230,22 @@ class Application(object):
         if req.body.startswith('http'):
             url = req.body
         else:
-            url = req.params['url']
+            url = req.params.get('url')
+        if not url:
+            return exc.HTTPBadRequest('No url parameter provided')
         body = urllib.urlopen(url).read()
         try:
             data = json.loads(body)
         except ValueError:
-            print 'Bad data for url %r: %s' % (url, body)
+            import sys
+            print >> sys.stderr, 'Bad data for url %r: %s' % (url, body)
             raise
         data['post'] = urlparse.urljoin(url, data['post'])
         data['url'] = url
         consumers = self.consumers
         consumers[url] = data
         self.consumers = consumers
+        return exc.HTTPCreated()
 
     @wsgify
     def homepage(self, req):

@@ -65,7 +65,7 @@ class DevelopApp(object):
             resp.set_cookie('auth', urllib.quote(json.dumps(data)), max_age=60*60*24*365*10)
             return resp
         else:
-            return Response(json=r)
+            return Response(status=400, json=r)
 
     def get_script_filename(self, email, scriptname):
         path = os.path.join(self.dir,

@@ -332,12 +332,13 @@ function loginClicked() {
     return false;
   }
   navigator.id.get(function (assertion) {
+    var url = BASE + '/develop/api/auth';
     if (! assertion) {
       return;
     }
     $.ajax({
       type: 'POST',
-      url: '/develop/api/auth',
+      url: url,
       data: assertion,
       success: function (resp, status, req) {
         setAuth();
