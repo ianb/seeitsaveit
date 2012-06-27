@@ -316,6 +316,81 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
 
 </div>
 
+<div>
+
+  A quick guide to the code: <code>server/server.py</code> is a simple
+  server to support the querying and development of new code.  The
+  develop part is in <code>server/develop.py</code>
+  and <code>server/static/develop/</code>.  You can
+  run <code>server.py</code> and you shouldn't need to install
+  anything.
+
+</div>
+
+<div>
+
+  The addon is in <code>lib/</code> and <code>data/</code>,
+  which <code>lib/main.js</code> doing the bulk of the work.  Use
+  the <code>cfx</code> tool in Jetpack/Addon-SDK to build the code
+  into an .xpi addon.
+
+</div>
+
+<h1>How Does It Work?</h1>
+
+<div>
+
+  The basic steps:
+
+  <ol>
+
+    <li> The user indicates they want to extract information from the
+    page, by pressing that <img src="static/box-download.png">
+    link. </li>
+
+    <li> The page is copied and serialized.  This process eliminates
+    parts of the page that make it interactive, but aren't important
+    to its appearance at that moment.  Things
+    like <code>&lt;script></code> tags are removed. Links are made
+    absolute when it's clear that something is a link, though
+    a <code>&lt;base href></code> tag are still generally necessary.
+    Things like external CSS files are left as-is, but iframes and
+    canvas elements are made static. </li>
+
+    <li> While the serialization is happening, we also ask the server
+    if there are extracting scripts that work for the given URL.  We
+    ask for consumers that go with the output of those extractors at
+    the same time.  The user chooses an extractor. </li>
+
+    <li> We turn that whole serialized page into a <code>data:</code>
+    URL.  We also add the extractor script to the page, and any
+    scripts it says it requires.  Those are the only scripts that are
+    on the page &mdash; any scripts on the original page have been
+    removed, so there can't be conflicts. </li>
+
+    <li> We call the Javascript function that performs the scrape.  It
+    should return an object (it can do so synchronously or
+    asynchronously).  We <em>should</em> sandbox everything and keep
+    the Javascript from accessing external resources, but so far that
+    isn't being done. </li>
+
+    <li> The extractor declared its type, so we add that type to the
+    result object, along with some information about the original
+    document (such as its URL). </li>
+
+    <li> We see which consumers match the type of the result, and let
+    the user pick amongst those consumers. </li>
+
+    <li> We send a POST request to the consumer with the extracted
+    data, and display the result of that to the user. </li>
+
+  </ol>
+
+</div>
+
+
+
+
 </div> <!-- div.row.span12 -->
 
  </body>
