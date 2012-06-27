@@ -101,7 +101,7 @@ class Application(object):
     @wsgify
     def __call__(self, req):
         ## Hack for Petri
-        if req.host == 'seeitsaveit.vcap.mozillalabs.com' and req.scheme == 'http':
+        if req.headers.get('X-SSL', '').lower() == 'on':
             req.scheme = 'https'
         if req.path_info == '/query':
             return self.query(req)
