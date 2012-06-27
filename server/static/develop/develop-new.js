@@ -344,7 +344,7 @@ function loginClicked() {
         setAuth();
       },
       error: function (req, status, error) {
-        console.log('Got error', req, status, error);
+        console.log('Got error', status, error);
       }
     });
   });
