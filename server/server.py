@@ -183,7 +183,7 @@ class Application(object):
                     if re.match(url_regex, url):
                         matches.append(func_data)
                         break
-        result = {'scrapers': matches}
+        result = {'extractors': matches}
         types = set(item['type'] for item in matches if item.get('type'))
         consumers = []
         for type in types:

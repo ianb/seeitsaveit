@@ -1,23 +1,23 @@
 var developBound = false;
 
-self.port.on("Scrapers", function (scrapers) {
+self.port.on("Extractors", function (extractors) {
   var el = show('options', 'option-list');
-  if (! scrapers.length) {
+  if (! extractors.length) {
     el.appendChild(
       make('li', null, ['There are no pre-built options available']));
   } else {
-    scrapers.forEach(function (scraper) {
+    extractors.forEach(function (extractor) {
       var li = make('li');
       var button = make('button', {'type': 'button'},
-        [(scraper.icon ? make('img', {src: scraper.icon}) : null),
-         scraper.name]);
+        [(extractor.icon ? make('img', {src: extractor.icon}) : null),
+         extractor.name]);
       button.addEventListener('click', function () {
         show('processing');
-        self.port.emit("ScraperChosen", scraper);
+        self.port.emit("ExtractorChosen", extractor);
       }, false);
       var anchor = make('a', {href: '#', 'class': 'develop-script'}, 'develop');
       anchor.addEventListener('click', function () {
-        self.port.emit("Develop", {js: scraper.js});
+        self.port.emit("Develop", {js: extractor.js});
       });
       li.appendChild(button);
       li.appendChild(anchor);

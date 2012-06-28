@@ -1,6 +1,6 @@
 var timeoutId = null;
 
-self.port.on("StartScrape", function (functionName, timeout) {
+self.port.on("StartExtraction", function (functionName, timeout) {
   console.log("Running " + functionName + ": " + unsafeWindow[functionName]);
   var func = unsafeWindow[functionName];
   if (! func) {
