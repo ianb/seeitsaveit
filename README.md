@@ -20,3 +20,6 @@ scraper never touches the live page you are looking at.
 The scraper can then produce some JSON of whatever it might want to
 scrape from the page.  Then you are asked where you want to send that
 JSON - scraping and the consumption of the scraped content are separated.
+
+I roughly maintain a list of ideas for enhancing this project in the
+[TODO](TODO.md) file.
