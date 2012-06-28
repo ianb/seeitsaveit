@@ -3,11 +3,13 @@
  <head>
   <meta charset="UTF-8">
   <title>SeeItSaveIt</title>
-  <script src="develop/bootstrap/js/bootstrap.js"></script>
   <link href="develop/bootstrap/css/bootstrap.css" rel="stylesheet">
   <link href="static/homepage.css" rel="stylesheet">
   <style>
     body {
+      padding-top: 60px;
+    }
+    section {
       padding-top: 60px;
     }
   </style>
@@ -17,12 +19,26 @@
 <div class="navbar navbar-fixed-top">
  <div class="navbar-inner">
   <div class="container">
-   <a href="/" class="brand">SeeItSaveIt</a>
-  </div>
- </div>
-</div>
+    <a href="/" class="brand">SeeItSaveIt</a>
+    <ul class="nav nav-tabs">
+     <li><a href="https://github.com/ianb/seeitsaveit">Github</a></li>
+     <li class="dropdown" id="manifesto-menu">
+      <a class="dropdown-toggle" data-toggle="dropdown" href="#manifesto-menu">Manifesto
+       <b class="caret"></b></a>
+      <ul class="dropdown-menu">
+       <li><a href="#manifesto">A Manifesto</a></li>
+       <li><a href="#why">Why?</a></li>
+       <li><a href="#adhoc">Why Ad Hoc?</a></li>
+       <li><a href="#modularity">Modularity</a></li>
+      </ul>
+     </li>
+     <li><a href="#development">Development</a></li>
+    </ul>
+  </div> <!-- .container -->
+ </div> <!-- .navbar-inner -->
+</div> <!-- .navbar -->
 
-<div class="row span12">
+<div class="container">
 
 <div> SeeItSaveIt is an Addon for Firefox that extracts structured
 information from web pages, and sends it to services that can use that
@@ -30,6 +46,8 @@ data.  It does this using ad hoc, user-contributed scripts.  </div>
 
 <div> To get started <a class="btn btn-primary"
 href="/static/seeitsaveit.xpi">install the Addon</a></div>
+
+<section id="manifesto">
 
 <h1>A Manifesto</h1>
 
@@ -43,6 +61,10 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
   determinations.
 
 </div>
+
+</section>
+
+<section id="why">
 
 <h2>Why?</h2>
 
@@ -120,6 +142,10 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
 
 </div>
 
+</section>
+
+<section id="adhoc">
+
 <h2>Why Ad Hoc Extraction?</h2>
 
 <div>
@@ -181,6 +207,10 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
   parseable</em>.
 
 </div>
+
+</section>
+
+<section id="modularity">
 
 <h2>The Politics of Modularity</h2>
 
@@ -303,6 +333,10 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
 
 </div>
 
+</section>
+
+<section id="development">
+
 <h1>Development</h1>
 
 <div>
@@ -335,6 +369,10 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
   into an .xpi addon.
 
 </div>
+
+</section>
+
+<section id="howwork">
 
 <h1>How Does It Work?</h1>
 
@@ -388,10 +426,14 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
 
 </div>
 
+</section>
 
 
+</div> <!-- .container -->
 
-</div> <!-- div.row.span12 -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script src="develop/bootstrap/js/bootstrap.js"></script>
+
 
  </body>
 </html>
