@@ -22,4 +22,4 @@ scrape from the page.  Then you are asked where you want to send that
 JSON - scraping and the consumption of the scraped content are separated.
 
 I roughly maintain a list of ideas for enhancing this project in the
-[TODO](TODO.md) file.
+[TODO](https://github.com/ianb/seeitsaveit/blob/master/TODO.md) file.
