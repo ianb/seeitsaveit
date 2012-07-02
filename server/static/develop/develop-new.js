@@ -324,33 +324,6 @@ function loadOverwriteClicked() {
   $('#load-question').modal('hide');
 }
 
-function loginClicked() {
-  if (authUser) {
-    document.cookie = "auth=;path=/;";
-    $('#login').text('login');
-    authUser = null;
-    return false;
-  }
-  navigator.id.get(function (assertion) {
-    var url = BASE + '/develop/api/auth';
-    if (! assertion) {
-      return;
-    }
-    $.ajax({
-      type: 'POST',
-      url: url,
-      data: assertion,
-      success: function (resp, status, req) {
-        setAuth();
-      },
-      error: function (req, status, error) {
-        console.log('Got error', status, error);
-      }
-    });
-  });
-  return false;
-}
-
 function scriptURL() {
   return location.protocol + '//' + location.host + '/develop/api/scripts/' +
     encodeURIComponent(authUser) + '/' + encodeURIComponent(DOC.domain) + '.js';

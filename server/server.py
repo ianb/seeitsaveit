@@ -96,13 +96,16 @@ class Application(object):
                 os.path.dirname(os.path.abspath(__file__)),
                 'static'))
         self.status_capture = StatusStorage(os.path.join(dir, 'status'))
-        self.develop_app = DevelopApp(os.path.join(dir, 'develop'))
+        self.develop_app = DevelopApp(os.path.join(dir, 'develop'), self)
 
     @wsgify
     def __call__(self, req):
         ## Hack for Petri
         if req.headers.get('X-SSL', '').lower() == 'on':
             req.scheme = 'https'
+        if req.path_info == '/auth':
+            return self.auth(req)
+        self.annotate_auth(req)
         if req.path_info == '/query':
             return self.query(req)
         if req.path_info == '/':
@@ -120,6 +123,57 @@ class Application(object):
         if req.path_info_peek() == 'status':
             req.path_info_pop()
             return self.status_capture
+
+    ############################################################
+    ## Auth
+
+    @property
+    def secret(self):
+        ## FIXME: do this right:
+        return 'secret!'
+
+    def sign(self, email):
+        return hmac.new(self.secret, email, hashlib.sha1).hexdigest()
+
+    @wsgify
+    def auth(self, req):
+        assertion = req.body
+        data = 'assertion=%s&audience=%s' % (
+            urllib.quote(assertion),
+            urllib.quote(req.scheme + '://' + req.host))
+        r = urllib.urlopen('https://browserid.org/verify', data)
+        r = json.load(r)
+        if r['status'] == 'okay':
+            data = {
+                'status': 'ok',
+                'email': r['email'],
+                'signed': self.sign(r['email']),
+                }
+            resp = Response(json={'status': 'okay'})
+            resp.set_cookie('auth', urllib.quote(json.dumps(data)), max_age=60*60*24*365*10)
+            return resp
+        else:
+            return Response(status=400, json=r)
+
+    def annotate_auth(self, req):
+        req.user = self.get_user(req)
+        req.auth_xhr_url = req.application_url + '/auth'
+        req.auth_js = '<script src="https://browserid.org/include.js"></script><script src="%s/static/auth.js"></script><script>auth.authUrl=%r</script>' % (
+            req.application_url, req.application_url + '/auth')
+
+    def get_user(self, req):
+        cookie = req.cookies.get('auth')
+        if not cookie:
+            return None
+        data = json.loads(urllib.unquote(cookie))
+        sig = self.sign(data['email'])
+        if sig != data['signed']:
+            print 'Bad signature on data:', data
+            return None
+        return data
+
+    ############################################################
+    ## Query/repository
 
     @property
     def transformers(self):
