@@ -10,22 +10,22 @@ except ImportError:
     import json
 import hmac
 import hashlib
+import shutil
 
 
 class DevelopApp(object):
 
-    def __init__(self, dir):
+    def __init__(self, dir, register_app):
         if not os.path.exists(dir):
             os.makedirs(dir)
         self.dir = os.path.normcase(os.path.abspath(dir))
         self.static_app = DirectoryApp(os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
                 'static/develop'))
-
-    @property
-    def secret(self):
-        ## FIXME: do this right:
-        return 'secret!'
+        self.register_app = register_app
+        self.prefill_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'prefill-data')
 
     @wsgify
     def __call__(self, req):
@@ -43,6 +43,10 @@ class DevelopApp(object):
             return self.auth(req)
         if req.path_info.startswith('/api/scripts'):
             return self.script_store(req)
+        if req.path_info.startswith('/api/register-all'):
+            return self.register_all(req)
+        if req.path_info.startswith('/api/copy-prefill'):
+            return self.copy_prefill(req)
         return exc.HTTPNotFound()
 
     def sign(self, email):
@@ -97,7 +101,7 @@ class DevelopApp(object):
                 return exc.HTTPNotFound()
             return FileApp(filename)
         else:
-            return exc.HTTPMethodNotAllow(allow='POST,GET')
+            return exc.HTTPMethodNotAllow(allow='PUT,GET')
 
     def get_user(self, req):
         cookie = req.cookies.get('auth')
@@ -109,3 +113,50 @@ class DevelopApp(object):
             print 'Bad signature on data:', data
             return None
         return data
+
+    def register_all(self, req):
+        resp = Response(content_type='text/plain')
+        dir = os.path.normcase(os.path.abspath(self.dir))
+        for dirpath, dirnames, filenames in os.walk(dir):
+            if '.git' in dirnames:
+                dirnames.remove('.git')
+            for fn in filenames:
+                fn = os.path.join(dirpath, fn)
+                assert fn.startswith(dir)
+                fn = fn[len(dir):]
+                assert fn.startswith('/')
+                url = req.application_url + '/api/scripts' + fn
+                req = Request.blank('/register', body=url, method='POST')
+                resp.write('Added URL: %s\n' % url)
+                req.get_response(self.register_app)
+        return resp
+
+    def copy_prefill(self, req):
+        resp = Response(content_type='text/plain')
+        dir = os.path.normcase(os.path.abspath(self.prefill_dir))
+        for dirpath, dirnames, filenames in os.walk(dir):
+            if '.git' in dirnames:
+                dirnames.remove('.git')
+            for fn in filenames:
+                fn = os.path.join(dirpath, fn)
+                assert fn.startswith(dir)
+                new_fn = fn[len(dir):]
+                assert new_fn.startswith('/')
+                new_fn = new_fn.strip('/')
+                new_fn = os.path.join(self.dir, new_fn)
+                if not os.path.exists(os.path.dirname(new_fn)):
+                    os.path.makedirs(os.path.dirname(new_fn))
+                if os.path.exists(new_fn):
+                    with open(new_fn, 'rb') as fp:
+                        new_content = fp.read()
+                    with open(fn, 'rb') as fp:
+                        old_content = fp.read()
+                    if new_content == old_content:
+                        resp.write('%s already up-to-date\n' % new_fn)
+                    else:
+                        resp.write('Copying %s to %s (overwrite)\n' % (fn, new_fn))
+                        shutil.copy(fn, new_fn)
+                else:
+                    resp.write('Copying %s to %s\n' % (fn, new_fn))
+                    shutil.copy(fn, new_fn)
+        return resp
