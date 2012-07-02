@@ -1,1 +1,0 @@
-{"http://localhost:8080/status/describe": {"count": "*", "url": "http://localhost:8080/status/describe", "post": "http://localhost:8080/status/post", "name": "Simple global storage for lots of data", "types": ["status", "song"]}}
