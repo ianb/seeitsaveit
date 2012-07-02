@@ -1,8 +1,24 @@
 ## Addon
 
-* Allow images to be turned into `data:` URLs: https://gist.github.com/958841
+* Reverse the order of everything!  All that matters to the user is who they want to send data to (with the possible addition that some services might have multiple facets; but we'll just think of those as multiple services, though a simple brand is not sufficient).  Then we simply need to find the "best" extractor given the kind of data that is implied by the consumer.  Potentially we could run multiple extractors and compare.
 
-* Rename anything that talks about "scrapers" to use the term "extractor"
+* Let consumers accept postMessage, where a page is opened and the extracted data is sent via postMessage to that page.
+
+* Fix all FIXMEs
+
+* Create a way to handle pagination, so an extractor can get data from paginated results.  Maybe pagination will be a separate function, and the extractor will get multiple pages?  Or maybe the extractor can ask to do pagination.
+
+  - Add IDs to all elements during extraction, so the extractor can talk back about specific elements.  E.g., say "I want the content from the pages linked to by these elements: [...]"
+
+  - An analog to pagination is spidering in general.
+
+* Make all data plural; singular data will just be a list with a single item.  Consumers must handle selection of a single item if they require that.
+
+* Clarify the extracted data format.  Allow more than one kind of data to be included in an extraction?  Add date to the format, maybe add a hash of the source page (after serialization), add presence of cookies.  (Note: use case for more than one data type: article and html-page)
+
+* Work to sandbox extractors more.  Create tests that try to break the sandboxing.
+
+* Allow images to be turned into `data:` URLs: https://gist.github.com/958841
 
 * Combine the selection of the extractor with the selection of the consumer
 
@@ -18,33 +34,17 @@
 
 * Allow dragging an extractor/consumer set to a separate button
 
-* Let consumers accept postMessage, where a page is opened and the extracted data is sent via postMessage to that page.
-
 * Let the consumer open a new URL automatically when a POST submission comes in.
-
-* Fix all FIXMEs
 
 * Add wildcards to the domain matchers
 
 * Do URL matching on the client (domain matching only on the server)
 
-* Create a way to handle pagination, so an extractor can get data from paginated results.  Maybe pagination will be a separate function, and the extractor will get multiple pages?  Or maybe the extractor can ask to do pagination.
-
-  - An analog to pagination is spidering in general.
-
-* Add IDs to all elements during extraction, so the extractor can talk back about specific elements.  E.g., say "I want the content from the pages linked to by these elements: [...]"
-
-* Work to sandbox extractors more.  Create tests that try to break the sandboxing.
-
-* Make all data plural; singular data will just be a list with a single item.  Consumers must handle selection of a single item if they require that.
-
-* Clarify the extracted data format.  Allow more than one kind of data to be included in an extraction?  Add date to the format, maybe add a hash of the source page (after serialization), add presence of cookies.  (Note: use case for more than one data type: article and html-page)
-
 * Consider validation of data types
 
 * Consider scrubbing the extracted data to see if there are URLs that are not present in the source page (which could be a form of data leaking)
 
-* Filter <meta> tags better in the staticHTML code
+* Filter `<meta>` tags better in the staticHTML code.  `<meta charset>` for instance is not applicable, as the data is all unicode and separated from any transport.
 
 * Let consumer signal an error with the incoming data (report to repository?)
 
@@ -55,6 +55,8 @@
 * Instead of sending the data immediately to a consumer, allow for sending to an intermediary rendering page and then on to a consumer. This requires some more formal data type definition that includes a way to render such data.
 
 * Move the extractor button into the URL bar?
+
+* The extractor's `<script>` element shouldn't be present in the page. Maybe we can add and remove the tag?
 
 
 ## Data Types
@@ -102,7 +104,9 @@ Some data types I'd like to define more formally:
 
 ## Develop
 
-* Add stripper to jseeitsaveit, to strip HTML down to its more semantic base (i.e., removing classes and the like).
+* Add an HTML stripper to jseeitsaveit, to strip HTML down to its more semantic base (i.e., removing classes and the like).
+
+* Add HTML serialization (i.e., staticHTML) to jseeitsaveit.
 
 * Make @require work properly in development
 
