@@ -1,0 +1,25 @@
+<html>
+<head>
+ <script src="https://browserid.org/include.js"></script>
+ <script src="/auth/wsgibrowserid.js"></script>
+</head>
+<body>
+<h1>Login</h1>
+
+<p>Access is protected.</p>
+
+<button type="button" id="button">Login to continue</button>
+
+<script>
+var el = document.getElementById('button');
+el.addEventListener('click', function () {
+  WSGIBrowserID.login(function (auth) {
+    if (auth) {
+      location.reload();
+    }
+  });
+}, false);
+</script>
+
+</body>
+</html>

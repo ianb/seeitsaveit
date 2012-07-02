@@ -1,0 +1,64 @@
+<html>
+<head>
+<script>
+document.addEventListener('click', function (ev) {
+console.log('got event 1', ev.target, ev.target.pos);
+explodeText(ev.target);
+
+}, false);
+
+document.addEventListener('click', function (ev) {
+console.log('got event 2', ev.target, ev.target.pos);
+}, true);
+
+function explodeText(el) {
+  for (var i=el.childNodes.length-1; i>=0; i--) {
+    var child = el.childNodes[i];
+    if (child.nodeType != document.TEXT_NODE) {
+      continue;
+    }
+    var text = child.nodeValue;
+    if (! text) {
+      continue;
+    }
+    var last = createSpan(text.charAt(text.length-1));
+    last.pos = i+','+(text.length-1);
+    el.replaceChild(last, child);
+    for (var j=text.length-2; j >= 0; j--) {
+      var span = createSpan(text.charAt(j));
+      span.pos = i+','+j;
+      el.insertBefore(span, last);
+      last = span;
+    }
+  }
+}
+
+function createSpan(char) {
+  var el = document.createElement('span');
+  el.appendChild(document.createTextNode(char));
+  el.style.margin = '0';
+  el.style.padding = '0';
+  el.style.display = 'inline';
+  return el;
+}
+
+window.onload = function () {
+//explodeText(document.getElementById('para'));
+}
+
+</script>
+<style>
+  span { padding: 1px; }
+</style>
+</head>
+
+<body>
+
+
+<p id="para">
+Hey, this is a paragraph. a b c d e f g h i j k l m n o p q r s t u v w x y z
+Another bit of text, another thing to think about, another something or another
+and so we go again, so we do again, so we whatever blah blah blah.
+</p>
+
+</body> </html>

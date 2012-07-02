@@ -1,0 +1,61 @@
+ScrapBook+:
+https://addons.mozilla.org/en-US/firefox/addon/scrapbook-plus/
+Basically Save-As but managing the saved pages itself
+
+Diigo screenshot:
+https://addons.mozilla.org/en-US/firefox/addon/awesome-screenshot-capture-/
+
+Save a page (for offline):
+https://addons.mozilla.org/en-US/firefox/addon/read-later-fast/
+
+Quick Note:
+https://addons.mozilla.org/en-US/firefox/addon/quick-note/
+Just like iPad notes.  Not really annotation.
+
+Highlight web pages:
+https://addons.mozilla.org/en-US/firefox/addon/web-highlighter-by-diigo/
+Highlight anything.  Seems text-based; you can't highlight a small
+piece of text, probably because it can't easily be matched on.  Stores
+highlights locally.
+
+
+
+
+Invert bookmarking: make a note about a page, search and view notes,
+implicit bookmark; also turn into "read later"
+
+Extensions able to present themselves in Firefox Home somehow; e.g.,
+an extension with a bookmarklet version
+
+Can we store things in Sync?  Can we publish/share out of Sync?
+
+
+http://code.google.com/p/rangy/
+http://en.wikipedia.org/wiki/Reframe_It
+http://en.wikipedia.org/wiki/Furl
+http://en.wikipedia.org/wiki/Diigo
+
+http://www.diigo.com/tools/diigolet
+https://addons.mozilla.org/en-US/firefox/addon/warichu-bar/
+https://addons.mozilla.org/en-US/firefox/addon/floatnotes/
+https://addons.mozilla.org/en-US/firefox/addon/opencomment/
+https://addons.mozilla.org/en-US/firefox/addon/metacomments/
+https://addons.mozilla.org/en-US/firefox/addon/reframe-it/
+https://addons.mozilla.org/en-US/firefox/addon/cocomment/
+
+
+
+
+
+Kinds of apps to write:
+
+annotate (what we have now)
+bquot.com-like service (bquotish)
+saved pages (saved)
+readable pages (readable)
+read later (readlater)
+screen scraping?
+contact import/scraping?
+
+Also add appstrunk which is the current checkout of openwebapps (with
+services in place)
