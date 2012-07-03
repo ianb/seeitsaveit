@@ -12,18 +12,16 @@ from webob.dec import wsgify
 from webob import exc
 from webob import Response
 from tempita import HTMLTemplate, Template
-from wsgibrowserid.wsgiapp import Application as BrowserApp
 
 logger = logging.getLogger('annotate')
 
 here = os.path.dirname(os.path.abspath(__file__))
 
 
-class Application(object):
+class Annotate(object):
 
     def __init__(self, dir):
         self.dir = dir
-        self.appinclude_js = appinclude_js
 
     @wsgify
     def __call__(self, req):

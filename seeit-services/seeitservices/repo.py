@@ -1,25 +1,13 @@
 #!/usr/bin/env python
 import os
-import site
-here = os.path.dirname(os.path.abspath(__file__))
-site.addsitedir(os.path.join(here, 'vendor'))
-site.addsitedir(os.path.join(here, 'vendor-binary'))
-
-import optparse
 import urlparse
 import urllib
 import re
 from webob.dec import wsgify
 from webob import exc
 from webob import Response, Request
-from webob.static import DirectoryApp, FileApp
-try:
-    import simplejson as json
-except ImportError:
-    import json
+from seeitservices.util import json, JsonFile, ServeStatic
 from statusstorage import StatusStorage
-from develop import DevelopApp
-import tempita
 
 
 def parse_metadata(script, url):
@@ -92,11 +80,8 @@ class Application(object):
             os.makedirs(dir)
         self.transformer_fn = os.path.join(dir, 'transformers.json')
         self.consumers_fn = os.path.join(dir, 'consumers.json')
-        self.directory_app = DirectoryApp(os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                'static'))
+        self.directory_app = ServeStatic(__name__, 'static-repo')
         self.status_capture = StatusStorage(os.path.join(dir, 'status'))
-        self.develop_app = DevelopApp(os.path.join(dir, 'develop'), self)
 
     @wsgify
     def __call__(self, req):
@@ -114,9 +99,6 @@ class Application(object):
             return self.register(req)
         if req.path_info == '/register-consumer':
             return self.register_consumer(req)
-        if req.path_info_peek() == 'develop':
-            req.path_info_pop()
-            return self.develop_app
         if req.path_info_peek() == 'static':
             req.path_info_pop()
             return self.directory_app
@@ -125,79 +107,11 @@ class Application(object):
             return self.status_capture
 
     ############################################################
-    ## Auth
-
-    @property
-    def secret(self):
-        ## FIXME: do this right:
-        return 'secret!'
-
-    def sign(self, email):
-        return hmac.new(self.secret, email, hashlib.sha1).hexdigest()
-
-    @wsgify
-    def auth(self, req):
-        assertion = req.body
-        data = 'assertion=%s&audience=%s' % (
-            urllib.quote(assertion),
-            urllib.quote(req.scheme + '://' + req.host))
-        r = urllib.urlopen('https://browserid.org/verify', data)
-        r = json.load(r)
-        if r['status'] == 'okay':
-            data = {
-                'status': 'ok',
-                'email': r['email'],
-                'signed': self.sign(r['email']),
-                }
-            resp = Response(json={'status': 'okay'})
-            resp.set_cookie('auth', urllib.quote(json.dumps(data)), max_age=60*60*24*365*10)
-            return resp
-        else:
-            return Response(status=400, json=r)
-
-    def annotate_auth(self, req):
-        req.user = self.get_user(req)
-        req.auth_xhr_url = req.application_url + '/auth'
-        req.auth_js = '<script src="https://browserid.org/include.js"></script><script src="%s/static/auth.js"></script><script>auth.authUrl=%r</script>' % (
-            req.application_url, req.application_url + '/auth')
-
-    def get_user(self, req):
-        cookie = req.cookies.get('auth')
-        if not cookie:
-            return None
-        data = json.loads(urllib.unquote(cookie))
-        sig = self.sign(data['email'])
-        if sig != data['signed']:
-            print 'Bad signature on data:', data
-            return None
-        return data
-
-    ############################################################
     ## Query/repository
 
-    @property
-    def transformers(self):
-        if not os.path.exists(self.transformer_fn):
-            return {}
-        with open(self.transformer_fn, 'rb') as fp:
-            return json.load(fp)
+    transformers = JsonFile('transformer_fn')
 
-    @transformers.setter
-    def transformers(self, value):
-        with open(self.transformer_fn, 'wb') as fp:
-            json.dump(value, fp)
-
-    @property
-    def consumers(self):
-        if not os.path.exists(self.consumers_fn):
-            return {}
-        with open(self.consumers_fn, 'rb') as fp:
-            return json.load(fp)
-
-    @consumers.setter
-    def consumers(self, value):
-        with open(self.consumers_fn, 'wb') as fp:
-            json.dump(value, fp)
+    consumers = JsonFile('consumers_fn')
 
     @wsgify
     def query(self, req):
@@ -250,7 +164,6 @@ class Application(object):
     @wsgify
     def query_consumer(self, req):
         type = req.GET['consumer']
-        consumers = self.consumers
         matches = []
         for url, consumer in self.consumers.iteritems():
             if type in consumer['types']:
@@ -259,7 +172,6 @@ class Application(object):
 
     @wsgify
     def register(self, req):
-        import sys
         if req.body.startswith('http'):
             js_url = req.body
         else:
@@ -300,36 +212,3 @@ class Application(object):
         consumers[url] = data
         self.consumers = consumers
         return exc.HTTPCreated()
-
-    @wsgify
-    def homepage(self, req):
-        return FileApp(os.path.join(here, 'homepage.html'))
-
-
-parser = optparse.OptionParser(
-    usage='%prog [OPTIONS]',
-    )
-parser.add_option('-H', '--host', metavar='HOST', default='localhost')
-parser.add_option('-p', '--port', metavar='PORT', default='8080')
-parser.add_option('--dir', metavar='DIRECTORY', default='./data')
-
-
-def main():
-    options, args = parser.parse_args()
-    app = Application(options.dir)
-    try:
-        from paste.httpserver import serve
-        print 'Using paste.httpserver'
-        serve(app, host=options.host, port=int(options.port))
-    except ImportError:
-        import wsgiref.simple_server
-        server = wsgiref.simple_server.make_server(
-            options.host, int(options.port), app)
-        print 'Serving wsgiref on http://%s:%s' % (options.host, options.port)
-        try:
-            server.serve_forever()
-        except KeyboardInterrupt:
-            print 'Bye'
-
-if __name__ == '__main__':
-    main()
