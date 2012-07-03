@@ -1,17 +1,10 @@
 import os
 import urllib
-import hmac
 import re
 import datetime
 import logging
-try:
-    import simplejson as json
-except ImportError:
-    import json
-from webob.dec import wsgify
 from webob import exc
-from webob import Response
-from tempita import HTMLTemplate, Template
+from seeitservices.util import json, wsgify, Response, ServeStatic
 
 logger = logging.getLogger('annotate')
 
@@ -22,80 +15,16 @@ class Annotate(object):
 
     def __init__(self, dir):
         self.dir = dir
+        self.static_app = ServeStatic(__name__, "static-annotate")
 
     @wsgify
     def __call__(self, req):
         req.charset = None
-        if req.path_info == '/':
-            return self.homepage(req)
-        elif req.path_info == '/code.js':
-            return self.bookmarklet(req, 'code.js')
-        #elif req.path_info == '/bookmarklet.js':
-        #    return self.bookmarklet(req, 'bookmarklet.js')
-        elif req.path_info == '/dom.send.bookmarklet.js':
-            return self.bookmarklet(req, 'dom.send.bookmarklet.js')
-        elif req.path_info == '/manifest.webapp':
-            return Response(
-                content_type='application/x-web-app-manifest+json',
-                body=open(os.path.join(here, 'manifest.webapp')).read())
-        elif req.path_info == '/dom.send.html':
-            return self.bookmarklet(
-                req,
-                'dom.send.html',
-                content_type='text/html')
-        elif req.path_info == '/icon48.png':
-            return Response(
-              content_type='image/png',
-              body=open(os.path.join(here, 'icon48.png')).read())
-        elif req.path_info == '/favicon.ico':
-            return exc.HTTPNotFound()
-        elif req.path_info_peek() == 'auth':
-            req.path_info_pop()
-            return self.auth_app
-        else:
+        if req.path_info_peek() == 'store':
             return self.store(req)
-
-    def get_manifest(self, req):
-        url = req.params.get('url')
-        if not url:
-            return Response(
-                status=400,
-                content_type='application/json',
-                body=json.dumps(dict(status='error', message="Missing required 'url' parameter")))
-        try:
-            resp = urllib.urlopen(url)
-        except Exception, e:
-            return Response(
-                status=502,
-                content_type='application/json',
-                body=json.dumps(dict(status='error', message='Unable to contact remote server (%s): %s' % (url, e))))
-        return Response(
-            content_type=resp.headers.getheader('content-type') or 'application/octet-stream',
-            body=resp.read())
-
-    def homepage(self, req):
-        tmpl = HTMLTemplate.from_filename(os.path.join(here, 'homepage.html'))
-        resp = tmpl.substitute(app=self, req=req, appIncludeJs=self.appinclude_js)
-        return Response(body=resp)
-
-    def bookmarklet(self, req, name, content_type='text/javascript'):
-        tmpl = Template.from_filename(os.path.join(here, name))
-        with open(os.path.join(here, 'docserialize.js')) as fp:
-            docserialize = fp.read()
-        body = tmpl.substitute(
-            uiType='annotation',
-            appUrl=req.application_url,
-            options={},
-            bookmarkletUrl=req.url,
-            docserializeJs=docserialize,
-            appIncludeJs=self.appinclude_js,
-            )
-        return Response(
-            body=body,
-            content_type=content_type)
+        return self.static_app
 
     def store(self, req):
-        req.userid = self.get_userid(req)
         auth = AuthDomain.from_request(req, self)
         authorized = auth.without_lock
         add_cookie = None
@@ -118,29 +47,11 @@ class Annotate(object):
             resp = self.store_response(req, auth)
         if add_cookie:
             resp.set_cookie(add_cookie[0], add_cookie[1], max_age=datetime.timedelta(days=10 * 365))
-        if not req.userid and req.cookies.get(self.auth_app.cookie_name):
+        if not req.email and req.cookies.get(self.auth_app.cookie_name):
             logger.debug('Invalid cookie: %r' % req.cookies.get(self.auth_app.cookie_name))
             ## Invalid cookie:
             resp.delete_cookie(self.auth_app.cookie_name)
         return resp
-
-    def check_sig(self, value, sig):
-        return self.make_sig(value) == sig
-
-    def make_sig(self, value):
-        return hmac.new(self.secret(), value).hexdigest()
-
-    def secret(self):
-        return self.auth_app.secret_getter()
-
-    def get_userid(self, req):
-        cookie = req.cookies.get(self.auth_app.cookie_name)
-        if not cookie:
-            return None
-        userid, sig = urllib.unquote(cookie).split(None, 1)
-        if not self.check_sig(userid, sig):
-            return None
-        return userid
 
     def store_response(self, req, auth):
         url = auth.url
@@ -256,10 +167,10 @@ class AuthDomain(object):
         to make this client authorized (if needed)
 
         Cookie is returned as (cookie_name, value)"""
-        if self.req.userid:
+        if self.req.email:
             users = self.get_metadata('authorization') or []
-            if self.req.userid not in users:
-                users.append(self.req.userid)
+            if self.req.email not in users:
+                users.append(self.req.email)
                 self.save_metadata(users, 'authorization')
             c = urllib.unquote(self.req.cookies.get('explicitauth', ''))
             new_cookie = []
@@ -283,7 +194,7 @@ class AuthDomain(object):
         Returns (authorized, (cookie_name, value)) or (authorized, None)
         """
         if self._check_cookie_auth():
-            if self.req.userid:
+            if self.req.email:
                 add_cookie = self.add_authorization()
                 return (True, add_cookie)
             return (True, None)
@@ -306,17 +217,17 @@ class AuthDomain(object):
                 continue
             lock, sig = op.split(':', 1)
             if lock == self.lock:
-                ## FIXME: check userid here, add if possible
+                ## FIXME: check email here, add if possible
                 return self.server.check_sig(lock, sig)
         return False
 
     def _check_user_auth(self):
-        userid = self.req.userid
-        if not userid:
+        email = self.req.email
+        if not email:
             return False
         ## FIXME: not really secure?
         users = self.get_metadata('authorization')
-        return users and userid in users
+        return users and email in users
 
     def _check_link_auth(self):
         linkauth = self.req.params.get('auth')
