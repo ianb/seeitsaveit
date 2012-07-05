@@ -22,6 +22,12 @@ class Request(webob.Request):
     auth = descriptors.environ_getter('seeitservices.auth')
     auth_html = descriptors.environ_getter('seeitservices.auth_html')
     root = descriptors.environ_getter('seeitservices.root')
+    sub_key = descriptors.environ_getter('subber.key')
+
+    def add_sub(self, content_types, old, new):
+        if 'subber.subs' not in self.environ:
+            self.environ['subber.subs'] = []
+        self.environ['subber.subs'].append((content_types, old, new))
 
     @property
     def email(self):
@@ -65,7 +71,7 @@ def make_random(length=16):
 
 
 def sign(secret, text):
-    return b64_encode(hmac.new(secret, text, hashlib.sha1))
+    return b64_encode(hmac.new(secret, text, hashlib.sha1).digest())
 
 
 def send_request(app_req, url, post_data=None):

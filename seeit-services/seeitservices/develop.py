@@ -1,7 +1,7 @@
 import urllib
 import os
 from seeitservices.util import wsgify, Response, send_request
-from seeitservices.util import ServeStatic
+from seeitservices.subber import Subber
 from webob.static import FileApp
 from webob import exc
 import shutil
@@ -13,8 +13,8 @@ class DevelopApp(object):
         if not os.path.exists(dir):
             os.makedirs(dir)
         self.dir = os.path.normcase(os.path.abspath(dir))
-        self.static_app = ServeStatic(
-            __name__, 'static-develop')
+        self.static_app = Subber(
+            'package:seeitservices.develop:./static-develop/')
         self.register_url = register_url
         self.prefill_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),

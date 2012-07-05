@@ -88,13 +88,10 @@ class Application(object):
         ## Hack for Petri
         if req.headers.get('X-SSL', '').lower() == 'on':
             req.scheme = 'https'
-        if req.path_info == '/auth':
-            return self.auth(req)
-        self.annotate_auth(req)
         if req.path_info == '/query':
             return self.query(req)
         if req.path_info == '/':
-            return self.homepage(req)
+            req.path_info = '/static/'
         if req.path_info == '/register':
             return self.register(req)
         if req.path_info == '/register-consumer':
@@ -102,9 +99,6 @@ class Application(object):
         if req.path_info_peek() == 'static':
             req.path_info_pop()
             return self.directory_app
-        if req.path_info_peek() == 'status':
-            req.path_info_pop()
-            return self.status_capture
 
     ############################################################
     ## Query/repository
