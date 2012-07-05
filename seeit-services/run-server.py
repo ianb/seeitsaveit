@@ -19,7 +19,7 @@ parser.add_option('--dir', metavar='DIRECTORY', default='./data')
 
 def main():
     options, args = parser.parse_args()
-    app = DispatcherApp(options.dir)
+    app = DispatcherApp(base=options.dir)
     try:
         from paste.httpserver import serve
         print 'Using paste.httpserver'
