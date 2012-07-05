@@ -1,5 +1,6 @@
 import os
 import urllib
+from webob import exc
 from seeitservices.util import wsgify, Response, json, ServeStatic
 from seeitservices.util import read_file, write_file, make_random, sign
 from seeitservices.mapper import Mapper
@@ -8,12 +9,12 @@ from seeitservices.mapper import Mapper
 class DispatcherApp(object):
 
     def __init__(self, secret_filename='/tmp/seeit-services/secret.txt',
-                 config_file='mapper.ini'):
+                 config_file='mapper.ini', **vars):
         self._secret_filename = secret_filename
         self.static_app = ServeStatic(__name__, 'static-auth', '/static-auth')
         self.config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                         config_file)
-        self.mapper = Mapper()
+        self.mapper = Mapper(vars=vars)
         self.mapper.add_configs(self.config_file)
 
     @wsgify
@@ -21,7 +22,7 @@ class DispatcherApp(object):
         self.set_auth(req)
         req.root = (req.application_url, self)
         if req.path_info == '/auth':
-            return self.auth()
+            return self.auth(req)
         if self.static_app.matches(req):
             return self.static_app
         return self.mapper
@@ -30,12 +31,15 @@ class DispatcherApp(object):
     ## Auth stuff
 
     def set_auth(self, req):
-        req.auth_html = (
-            '<script src="https://browserid.org/include.js"></script>'
-            '<script src="%s/static-auth/auth.js"></script>'
-            '<script>auth.authUrl=%r</script>') % (
-            req.application_url,
-            req.application_url + '/auth')
+        req.add_sub(
+            ['text/html'],
+            '</body>',
+            ('<script src="https://browserid.org/include.js"></script>'
+             '<script src="%s/static-auth/auth.js"></script>'
+             '<script>Auth.authUrl=%r</script>'
+             '</body>') % (
+                req.application_url,
+                req.application_url + '/auth'))
         auth = req.params.get('auth')
         if not auth:
             return
@@ -57,8 +61,11 @@ class DispatcherApp(object):
 
     @wsgify
     def auth(self, req):
-        assertion = req.params['assertion']
-        audience = req.params['audience']
+        try:
+            assertion = req.params['assertion']
+            audience = req.params['audience']
+        except KeyError, e:
+            return exc.HTTPBadRequest('Missing key: %s' % e)
         r = urllib.urlopen(
             "https://browserid.org/verify",
             urllib.urlencode(
@@ -68,5 +75,5 @@ class DispatcherApp(object):
             r['audience'] = audience
             static = json.dumps(r)
             static = self.signature(static) + '.' + static
-            r['auth'] = static
+            r['auth'] = {'query': {'auth': static}}
         return Response(json=r)

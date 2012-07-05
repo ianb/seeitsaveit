@@ -258,8 +258,13 @@ $(function () {
     activateShowSelector(this.value);
   });
   $('#iframe').height($(document).height()-68);
-  $('#login').bind('click', loginClicked);
-  setAuth();
+  $('#login').bind('click', function () {
+    if (Auth.email) {
+      navigator.id.logout();
+    } else {
+      navigator.id.request();
+    }
+  });
   $('#saver').bind('click', saveClicked);
   $('#register').bind('click', registerClicked);
   $('#load-keep').click(loadKeepClicked);
@@ -269,28 +274,16 @@ $(function () {
   }
 });
 
-var authUser = null;
+function onauthready() {
+  Auth.onlogin = function (email) {
+    console.log('logged in', Auth.authData);
+    $('#login').text(email);
+  };
 
-function setAuth() {
-  var value = null;
-  var ca = document.cookie.split(';');
-  for (var i=0; i<ca.length; i++) {
-    var c = ca[i];
-    while (c.charAt(0)==' ') {
-      c = c.substring(1,c.length);
-    }
-    if (c.indexOf("auth") == 0) {
-      value = c.substring(5,c.length);
-    }
-  }
-  if (! value) {
-    return;
-  }
-  value = JSON.parse(unescape(value));
-  var email = value.email;
-  $('#login').text(email);
-  authUser = email;
-  checkServerScript();
+  Auth.onlogout = function () {
+    console.log('logged out', Auth.authData);
+    $('#login').text('login');
+  };
 }
 
 function checkServerScript() {
@@ -326,11 +319,11 @@ function loadOverwriteClicked() {
 
 function scriptURL() {
   return location.protocol + '//' + location.host + '/develop/api/scripts/' +
-    encodeURIComponent(authUser) + '/' + encodeURIComponent(DOC.domain) + '.js';
+    encodeURIComponent(Auth.email) + '/' + encodeURIComponent(DOC.domain) + '.js';
 }
 
 function saveClicked() {
-  if (! authUser) {
+  if (! Auth.email) {
     $('#saver').text('Save (must log in)');
     return false;
   }
@@ -472,6 +465,9 @@ function inspectElement(element) {
 
 window.addEventListener("message", function (event) {
   var data = event.data;
+  if (event.origin == 'https://browserid.org') {
+    return;
+  }
   console.log('got message', data.substr(0, 80), event.origin);
   var result = null;
   if ((result = getRest(data, 'doc:'))) {
@@ -487,7 +483,7 @@ window.addEventListener("message", function (event) {
   } else if ((result = getRest(data, 'inspect:'))) {
     inspectElement(result);
   } else {
-    console.log('Could not understand message', data);
+    console.log('Could not understand message', data, event.origin);
   }
 }, false);
 
