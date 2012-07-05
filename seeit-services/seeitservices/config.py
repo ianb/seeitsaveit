@@ -10,6 +10,7 @@ class MyParser(initools.iniparser.INIParser):
         initools.iniparser.INIParser.__init__(self, True, ('=',))
         self.sections = []
         self.data = []
+        self.defaults = []
 
     def new_section(self, section):
         self.sections.append((section, self.filename, self.start_lineno))
@@ -21,7 +22,11 @@ class MyParser(initools.iniparser.INIParser):
         pos = self.start_lineno
         if section not in self.sections:
             self.sections.append((section, filename, 0))
-        self.data.append((section, name, value, filename, pos))
+        if section == 'global' and name.startswith('default '):
+            short_name = name.split(None, 1)[1]
+            self.defaults.append((short_name, value, filename, pos))
+        else:
+            self.data.append((section, name, value, filename, pos))
 
 
 class Config(DictMixin):
@@ -32,6 +37,7 @@ class Config(DictMixin):
         if vars is None:
             vars = {}
         self.vars = vars
+        self._defaults = []
 
     def load(self, filename):
         parser = MyParser()
@@ -41,6 +47,25 @@ class Config(DictMixin):
                 self._sections.append(section_name)
         for section, name, value, filename, pos in parser.data:
             self._config[(section, name)] = (value, filename, pos)
+        self._defaults.extend(parser.defaults)
+
+    def make_vars(self):
+        if not self._defaults:
+            return self.vars
+        new_vars = dict(self.vars)
+        for name, value, filename, pos in self._defaults:
+            if name not in self.vars:
+                tmpl = tempita.Template(value, name='%s:default %s=...' % (filename, name),
+                                        line_offset=pos - 1)
+                sub_value = tmpl.substitute(
+                    globals=self['global'],
+                    config=self,
+                    __file__=filename,
+                    environ=os.environ,
+                    here=os.path.dirname(os.path.abspath(filename)),
+                    **new_vars)
+                new_vars[name] = sub_value
+        return new_vars
 
     def __setitem__(self, value):
         raise NotImplemented
@@ -85,7 +110,7 @@ class Section(DictMixin):
         value, filename, pos = value
         if '{{' not in value:
             return value
-        tmpl = tempita.Template(value, name='%s at %s' % (name, filename),
+        tmpl = tempita.Template(value, name='%s:%s=...' % (filename, name),
                                 line_offset=pos - 1)
         return tmpl.substitute(
             section=self,
@@ -95,7 +120,7 @@ class Section(DictMixin):
             __section__=self.name,
             environ=os.environ,
             here=os.path.dirname(os.path.abspath(filename)),
-            **self.config.vars)
+            **self.config.make_vars())
 
     def __setitem__(self, value):
         raise NotImplemented
