@@ -1,2 +1,5 @@
 Profile
-server/data/status/statuses.json
+seeit-services/data
+seeitsaveit.xpi
+/*.sh
+

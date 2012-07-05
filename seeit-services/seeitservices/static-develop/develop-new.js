@@ -3,7 +3,7 @@ var DOC = null;
 var REGISTER = BASE + '/register';
 var IFRAME = BASE + '/develop/develop-iframe.js';
 var IFRAME_CSS = BASE + '/develop/develop-iframe.css';
-var JSEEITSAVEIT = BASE + '/static/jseeitsaveit.js';
+var JSEEITSAVEIT = BASE + '/develop/jseeitsaveit.js';
 
 var DEFAULT_SCRIPT = (
 '/*\n' +
@@ -287,7 +287,7 @@ function onauthready() {
 }
 
 function checkServerScript() {
-  if (authUser && DOC) {
+  if (Auth.email && DOC) {
     $.ajax({
       url: scriptURL(),
       type: "GET",

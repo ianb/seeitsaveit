@@ -129,12 +129,13 @@ class JsonFile(object):
         self.attr = attr
 
     def __set__(self, obj, value):
-        write_file(getattr(obj, self.attr), json.dumps(value))
+        filename = getattr(obj, self.attr)
+        write_file(filename, json.dumps(value))
 
-    def __get_(self, obj, cls):
+    def __get__(self, obj, type=None):
         filename = getattr(obj, self.attr)
         if not os.path.exists(filename):
-            return None
+            return {}
         with open(filename, 'rb') as fp:
             return json.load(fp)
 

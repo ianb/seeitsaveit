@@ -22,7 +22,18 @@ class Annotate(object):
         req.charset = None
         if req.path_info_peek() == 'store':
             return self.store(req)
+        if req.path_info == '/describe':
+            return self.describe(req)
         return self.static_app
+
+    @wsgify
+    def describe(self, req):
+        data = dict(
+            name='Annotate a document',
+            post=req.application_url + '/store',
+            types=['html'],
+            )
+        return Response(json=data)
 
     def store(self, req):
         auth = AuthDomain.from_request(req, self)

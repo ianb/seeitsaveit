@@ -2,10 +2,7 @@ import os
 from webob.dec import wsgify
 from webob import Response
 from webob import exc
-try:
-    import simplejson as json
-except ImportError:
-    import json
+from seeitservices.util import JsonFile
 import tempita
 
 
@@ -32,27 +29,15 @@ class StatusStorage(object):
             name="Simple global storage for lots of data",
             post=base_url + '/post',
             types=['status', 'song'],
-            count='*',
             )
 
-    @property
-    def data(self):
-        if not os.path.exists(self.data_fn):
-            return []
-        with open(self.data_fn, 'rb') as fp:
-            return json.load(fp)
-
-    @data.setter
-    def data(self, value):
-        with open(self.data_fn, 'wb') as fp:
-            json.dump(value, fp)
+    data = JsonFile('data_fn')
 
     def post(self, req):
         if req.method != 'POST':
             return exc.HTTPMethodNotAllowed(allow='POST')
         data = self.data
         body = req.json
-        import pprint; pprint.pprint(body)
         items = self.explode_items(body, ['status', 'song'])
         data.extend(items)
         self.data = data

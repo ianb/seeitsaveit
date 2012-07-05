@@ -69,7 +69,7 @@ class DevelopApp(object):
             return exc.HTTPMethodNotAllow(allow='PUT,GET')
 
     def register_all(self, req):
-        resp = Response(content_type='text/plain')
+        resp = Response(content_type='text/plain', body='Registering scripts\n')
         dir = os.path.normcase(os.path.abspath(self.dir))
         for dirpath, dirnames, filenames in os.walk(dir):
             if '.git' in dirnames:
@@ -85,7 +85,7 @@ class DevelopApp(object):
         return resp
 
     def copy_prefill(self, req):
-        resp = Response(content_type='text/plain')
+        resp = Response(content_type='text/plain', body='Copying prefill\n')
         dir = os.path.normcase(os.path.abspath(self.prefill_dir))
         for dirpath, dirnames, filenames in os.walk(dir):
             if '.git' in dirnames:

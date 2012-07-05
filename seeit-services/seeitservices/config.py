@@ -103,7 +103,7 @@ class Section(DictMixin):
     def __repr__(self):
         return "<Section [%s]>" % self.name
 
-    def __getitem__(self, name):
+    def __getitem__(self, name, **vars):
         value = self.config._config.get((self.name, name))
         if value is None:
             raise KeyError
@@ -112,6 +112,7 @@ class Section(DictMixin):
             return value
         tmpl = tempita.Template(value, name='%s:%s=...' % (filename, name),
                                 line_offset=pos - 1)
+        vars.update(self.config.make_vars())
         return tmpl.substitute(
             section=self,
             globals=self.config['global'],
@@ -120,7 +121,9 @@ class Section(DictMixin):
             __section__=self.name,
             environ=os.environ,
             here=os.path.dirname(os.path.abspath(filename)),
-            **self.config.make_vars())
+            **vars)
+
+    interpolate = __getitem__
 
     def __setitem__(self, value):
         raise NotImplemented

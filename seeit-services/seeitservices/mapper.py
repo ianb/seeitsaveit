@@ -14,6 +14,7 @@ class Mapper(object):
                 items = items.items()
             for prefix, value in items:
                 self.add(prefix, value)
+        self.config = Config(vars=self.vars)
 
     def add(self, prefix, value):
         self.matchers.append((prefix, value))
@@ -30,7 +31,9 @@ class Mapper(object):
                 req.script_name += prefix
                 req.path_info = req.path_info[len(prefix):]
                 return match
-        return exc.HTTPNotFound()
+            if prefix == '/':
+                return match
+        return exc.HTTPNotFound('No route')
 
     def load_object(self, name):
         mod, name = name.split(':', 1)
@@ -40,12 +43,11 @@ class Mapper(object):
         return value
 
     def add_configs(self, filenames):
-        config = Config(vars=self.vars)
         if isinstance(filenames, basestring):
             filenames = [filenames]
         for filename in filenames:
-            config.load(filename)
-        for section in config.by_prefix('app:'):
+            self.config.load(filename)
+        for section in self.config.by_prefix('app:'):
             options = dict(section.items())
             if 'name' not in options:
                 print options

@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 import os
 import urlparse
-import urllib
 import re
-from webob.dec import wsgify
+from seeitservices.util import wsgify, Response
 from webob import exc
-from webob import Response, Request
-from seeitservices.util import json, JsonFile, ServeStatic
+from seeitservices.util import json, JsonFile, ServeStatic, send_request
 from statusstorage import StatusStorage
 
 
@@ -85,9 +83,6 @@ class Application(object):
 
     @wsgify
     def __call__(self, req):
-        ## Hack for Petri
-        if req.headers.get('X-SSL', '').lower() == 'on':
-            req.scheme = 'https'
         if req.path_info == '/query':
             return self.query(req)
         if req.path_info == '/':
@@ -99,6 +94,7 @@ class Application(object):
         if req.path_info_peek() == 'static':
             req.path_info_pop()
             return self.directory_app
+        return exc.HTTPNotFound()
 
     ############################################################
     ## Query/repository
@@ -172,10 +168,7 @@ class Application(object):
             js_url = req.params.get('url')
         if not js_url:
             return exc.HTTPBadRequest('No url parameter provided')
-        if js_url.startswith(req.application_url):
-            data = Request.blank(js_url).get_response(self).body
-        else:
-            data = urllib.urlopen(js_url).read()
+        data = send_request(req, js_url)
         try:
             properties = parse_metadata(data, js_url)
         except ValueError, e:
@@ -183,7 +176,9 @@ class Application(object):
         transformers = self.transformers
         transformers[js_url] = properties
         self.transformers = transformers
-        return exc.HTTPCreated()
+        return Response(
+            content_type='text/plain',
+            body='Added %s at %s' % (properties.get('name'), js_url))
 
     @wsgify
     def register_consumer(self, req):
@@ -193,16 +188,18 @@ class Application(object):
             url = req.params.get('url')
         if not url:
             return exc.HTTPBadRequest('No url parameter provided')
-        body = urllib.urlopen(url).read()
+        body = send_request(req, url)
         try:
             data = json.loads(body)
         except ValueError:
             import sys
-            print >> sys.stderr, 'Bad data for url %r: %s' % (url, body)
+            print >> sys.stderr, 'Bad data for url %s: %r' % (url, body)
             raise
         data['post'] = urlparse.urljoin(url, data['post'])
         data['url'] = url
         consumers = self.consumers
         consumers[url] = data
         self.consumers = consumers
-        return exc.HTTPCreated()
+        return Response(
+            content_type='text/plain',
+            body='Added %s at %s' % (data.get('name'), url))
