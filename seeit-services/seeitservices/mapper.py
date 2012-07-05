@@ -1,12 +1,14 @@
 import sys
 from seeitservices.util import wsgify, Response
 from seeitservices.config import Config
+from webob import exc
 
 
 class Mapper(object):
 
-    def __init__(self, items=None):
+    def __init__(self, items=None, vars=None):
         self.matchers = []
+        self.vars = vars
         if items:
             if hasattr(items, 'items'):
                 items = items.items()
@@ -20,14 +22,15 @@ class Mapper(object):
     @wsgify
     def __call__(self, req):
         for i, (prefix, match) in enumerate(self.matchers):
-            if req.path_info.startswith(prefix):
-                if req.path_info == prefix and not req.path_info.endswith('/'):
-                    return Response(
-                        status=301,
-                        location=req.url + '/')
+            if req.path_info == prefix and not req.path_info.endswith('/'):
+                return Response(
+                    status=301,
+                    location=req.url + '/')
+            if req.path_info.startswith(prefix + '/'):
+                req.script_name += prefix
+                req.path_info = req.path_info[len(prefix):]
                 return match
-        return Response(
-            status=404)
+        return exc.HTTPNotFound()
 
     def load_object(self, name):
         mod, name = name.split(':', 1)
@@ -37,7 +40,7 @@ class Mapper(object):
         return value
 
     def add_configs(self, filenames):
-        config = Config()
+        config = Config(vars=self.vars)
         if isinstance(filenames, basestring):
             filenames = [filenames]
         for filename in filenames:
