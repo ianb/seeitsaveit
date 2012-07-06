@@ -10,11 +10,17 @@ jQuery.fn.collect = function (callback) {
   return result;
 };
 
-jQuery.strip = jQuery.fn.strip = function (text) {
+jQuery.strip = jQuery.fn.strip = function (text, normalize) {
+  if (normalize === undefined) {
+    normalize = true;
+  }
   if (text === undefined && this.text) {
     text = this.text();
   }
   text = text.replace(/^\s*/, '').replace(/\s*$/, '');
+  if (normalize) {
+    text = text.replace(/\s\s+/, ' ');
+  }
   if (! text) {
     return null;
   }
@@ -40,4 +46,20 @@ jQuery.fn.getlink = function () {
     return this[0].href;
   }
   return null;
+};
+
+jQuery.fn.allAttrs = function () {
+  var result = {};
+  this.each(function () {
+    var attrs = this.attributes;
+    if (attrs && attrs.length) {
+      var l = attrs.length;
+      for (var i=0; i<l; i++) {
+        var name = attrs[i].name;
+        var value = attrs[i].nodeValue;
+        result[name] = value;
+      }
+    }
+  });
+  return result;
 };
