@@ -90,6 +90,9 @@ def send_request(app_req, url, post_data=None):
                 post_data = post_data.encode('UTF-8')
             new_req.body = post_data
         resp = new_req.send(start_app)
+        if resp.status_code != 200:
+            raise Exception("Request to %s returned status: %s"
+                            % (url, resp.status))
         return resp.body
     else:
         r = urllib.urlopen(url, post_data)
