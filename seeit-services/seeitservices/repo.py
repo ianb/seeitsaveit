@@ -2,6 +2,7 @@
 import os
 import urlparse
 import re
+import urllib
 from seeitservices.util import wsgify, Response
 from webob import exc
 from seeitservices.util import json, JsonFile, ServeStatic, send_request
@@ -29,7 +30,7 @@ def parse_metadata(script, url):
             functions[-1][name] = value
             last_property = name
         elif last_property:
-            functions[1][last_property] += '\n' + line.rstrip()
+            functions[-1][last_property] += '\n' + line.rstrip()
     if not functions:
         raise ValueError("No @function defined")
     for item in functions:
@@ -118,7 +119,7 @@ class Application(object):
                 if isinstance(domains, basestring):
                     domains = [domains]
                 for domain in domains:
-                    if url_domain == domain:
+                    if url_domain == domain or domain == '*':
                         matches.append(func_data)
                         done = True
                         break
@@ -164,6 +165,10 @@ class Application(object):
     def register(self, req):
         if req.body.startswith('http'):
             js_url = req.body
+            if re.match(r'^https?%3a', js_url, re.I):
+                ## Fixes form corruption:
+                js_url = urllib.unquote(js_url)
+                js_url = js_url.rstrip('=')
         else:
             js_url = req.params.get('url')
         if not js_url:
@@ -178,7 +183,7 @@ class Application(object):
         self.transformers = transformers
         return Response(
             content_type='text/plain',
-            body='Added %s at %s' % (properties.get('name'), js_url))
+            body='Added %s at %s' % (properties[0].get('name'), js_url))
 
     @wsgify
     def register_consumer(self, req):
