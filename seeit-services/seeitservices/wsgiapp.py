@@ -3,7 +3,7 @@ import urllib
 from webob import exc
 from webob import Request
 from seeitservices.util import wsgify, Response, json, ServeStatic
-from seeitservices.util import read_file, write_file, make_random, sign
+from seeitservices.util import read_file, write_file, make_random, sign, indent
 from seeitservices.mapper import Mapper
 
 
@@ -53,7 +53,7 @@ class DispatcherApp(object):
         if not auth:
             return
         if '.' in auth:
-            sig, auth = auth.split(':')
+            sig, auth = auth.split('.', 1)
             if self.signature(auth) == sig:
                 req.auth = json.loads(auth)
 
@@ -97,5 +97,7 @@ class DispatcherApp(object):
             subreq = Request.blank(url)
             subresp = subreq.send(self)
             resp.write('URL: %s\n' % url)
-            resp.write((subresp.body or subresp.status).strip() + '\n')
+            resp_body = subresp.body or subresp.status
+            resp_body = resp_body.strip() + '\n'
+            resp.write(indent(resp_body))
         return resp
