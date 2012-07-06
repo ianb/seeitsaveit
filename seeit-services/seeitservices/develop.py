@@ -1,4 +1,5 @@
 import urllib
+import urlparse
 import os
 from seeitservices.util import wsgify, Response, send_request
 from seeitservices.subber import Subber
@@ -62,7 +63,7 @@ class DevelopApp(object):
                 os.makedirs(os.path.dirname(filename))
             with open(filename, 'wb') as fp:
                 fp.write(req.body)
-            return exc.HTTPNoContent()
+            return Response('', content_type=None)
         elif req.method == 'GET':
             if not os.path.exists(filename):
                 return exc.HTTPNotFound()
@@ -83,7 +84,8 @@ class DevelopApp(object):
                 assert fn.startswith('/')
                 url = req.application_url + '/api/scripts' + fn
                 resp.write('  registering URL: %s\n' % url)
-                send_request(req, self.register_url, url)
+                register_url = urlparse.urljoin(req.application_url, self.register_url)
+                send_request(req, register_url, url)
         return resp
 
     def copy_prefill(self, req):
