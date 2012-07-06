@@ -15,14 +15,14 @@ import hashlib
 from webob import static
 
 __all__ = ['Request', 'wsgify', 'Response', 'json', 'write_file', 'read_file',
-           'make_random', 'sign', 'ServeStatic', 'JsonFile']
+           'make_random', 'sign', 'ServeStatic', 'JsonFile', 'indent']
 
 
 class Request(webob.Request):
-    auth = descriptors.environ_getter('seeitservices.auth')
-    auth_html = descriptors.environ_getter('seeitservices.auth_html')
-    root = descriptors.environ_getter('seeitservices.root')
-    sub_key = descriptors.environ_getter('subber.key')
+    auth = descriptors.environ_getter('seeitservices.auth', None)
+    auth_html = descriptors.environ_getter('seeitservices.auth_html', None)
+    root = descriptors.environ_getter('seeitservices.root', None)
+    sub_key = descriptors.environ_getter('subber.key', None)
 
     def add_sub(self, content_types, old, new):
         if 'subber.subs' not in self.environ:
@@ -74,6 +74,11 @@ def sign(secret, text):
     return b64_encode(hmac.new(secret, text, hashlib.sha1).digest())
 
 
+def indent(text, indent='  '):
+    return ''.join(
+        indent + line for line in text.splitlines(True))
+
+
 def send_request(app_req, url, post_data=None):
     url = urlparse.urljoin(app_req.application_url, url)
     start, start_app = app_req.root
@@ -81,6 +86,8 @@ def send_request(app_req, url, post_data=None):
         new_req = Request.blank(url)
         if post_data:
             new_req.method = 'POST'
+            if isinstance(post_data, unicode):
+                post_data = post_data.encode('UTF-8')
             new_req.body = post_data
         resp = new_req.send(start_app)
         return resp.body
