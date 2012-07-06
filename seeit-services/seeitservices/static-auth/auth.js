@@ -114,7 +114,7 @@ if (typeof $ !== "undefined" || typeof jQuery !== "undefined") {
         }
       }
     });
-  });
+  })();
 }
 
 if (window.onauthready) {
