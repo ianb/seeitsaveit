@@ -1,109 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
-    <style>
-      body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
-      }
-    </style>
-    <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
-    <title>Make a scraper!</title>
-    <link href="develop-new.css" rel="stylesheet">
-    <!-- <link href="google-code-prettify/prettify.css" rel="stylesheet"> -->
-  </head>
-  <body>
+ <head>
+  <meta charset="UTF-8">
+  <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
+  <style>
 
+body {
+  padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+}
 
-    <div class="navbar navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
-          <span class="brand">Dev.SeeItSaveIt</span>
-          <div class="nav-collapse">
-            <ul class="nav">
-              <li><a id="saver" href="#">Save</a></li>
-              <li><a id="register" href="#">Register</a></li>
-            </ul>
-            <ul class="nav pull-right">
-              <li><a href="#" id="login">-</a></li>
-            </ul>
-          </div><!--/.nav-collapse -->
-        </div>
-      </div>
-    </div>
+  </style>
+  <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+  <title>Make a scraper!</title>
+  <link href="develop-new.css" rel="stylesheet">
+ </head>
+ <body>
 
-
+<div class="navbar navbar-fixed-top">
+ <div class="navbar-inner">
+  <div class="container">
+   <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+    <span class="icon-bar"></span>
+    <span class="icon-bar"></span>
+    <span class="icon-bar"></span>
+   </a>
+   <span class="brand">Dev.SeeItSaveIt</span>
+   <div class="nav-collapse">
+    <ul class="nav">
+     <li><a id="saver" href="#">Save</a></li>
+     <li><a id="register" href="#">Register</a></li>
+    </ul>
+    <ul class="nav pull-right">
+     <li><a href="#" id="login">-</a></li>
+    </ul>
+   </div><!--/.nav-collapse -->
+  </div>
+ </div>
+</div>
 
 <div class="row">
-  <div class="span6" style="padding: 0.3em">
-          Script: <span id="url"></span><br>
-          <textarea id="script" style="width: 100%; height: 10em"></textarea>
-          <div id="button-set">
-          <button id="execute" class="btn" type="button">Execute!</button>
-          </div>
-
-          <div id="script-output-container" class="alert alert-block" style="display: none">
-            <a class="close" data-dismiss="alert" href="#">&times;</a>
-            <pre id="script-output"></pre>
-          </div>
-
-          <div class="form-inline">
-            <label for="selectors">Classes:</label> <select id="selectors"></select>
-          </div>
-          <div>
-            <input type="text" id="showselector" class="input-large"><br>
-          </div>
-          <div id="aboutselector"></div>
-        </td>
-
+ <div class="span6" style="padding: 0.3em">
+  Script: <span id="url"></span><br>
+  <textarea id="script" style="width: 100%; height: 10em"></textarea>
+  <div id="button-set">
+   <button id="execute" class="btn" type="button">Execute!</button>
   </div>
-  <div class="span6" style="padding: 0">
-          <iframe src="blank.html" id="iframe" style="width: 100%; height: 90%"></iframe>
+
+  <div id="script-output-container" class="alert alert-block" style="display: none">
+   <a class="close" data-dismiss="alert" href="#">&times;</a>
+   <pre id="script-output"></pre>
   </div>
-</div>
+
+  <div class="form-inline">
+   <label for="selectors">Classes:</label> <select id="selectors"></select>
+  </div>
+
+  <div>
+   <input type="text" id="showselector" class="input-large"><br>
+  </div>
+
+  <div id="aboutselector"></div>
+
+ </div> <!-- .span6 -->
+
+ <div class="span6" style="padding: 0">
+  <iframe src="blank.html" id="iframe" style="width: 100%; height: 90%"></iframe>
+ </div> <!-- .span6 -->
+
+</div> <!-- .row -->
 
 <div id="load-question" class="modal hide">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal">×</button>
-    <h3>Load script?</h3></div>
-  <div class="modal-body">
-    You already have a script available for the domain <span id="load-domain"></span>.
-    Do you want to keep what you have, or load the new script?
-    <pre id="load-data" class="pre-scrollable"></pre>
-  </div>
-  <div class="modal-footer">
-    <button id="load-keep" class="btn">Keep what I have</button>
-    <button id="load-overwrite" class="btn btn-primary">Load the saved script</button>
-  </div>
+ <div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal">×</button>
+  <h3>Load script?</h3>
+ </div>
+ <div class="modal-body">
+  You already have a script available for the domain <span id="load-domain"></span>.
+  Do you want to keep what you have, or load the new script?
+  <pre id="load-data" class="pre-scrollable"></pre>
+ </div>
+ <div class="modal-footer">
+  <button id="load-keep" class="btn">Keep what I have</button>
+  <button id="load-overwrite" class="btn btn-primary">Load the saved script</button>
+ </div>
 </div>
 
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-    <script src="bootstrap/js/bootstrap.js"></script>
-<!--
-    <script src="bootstrap/js/bootstrap-transition.js"></script>
-    <script src="bootstrap/js/bootstrap-alert.js"></script>
-    <script src="bootstrap/js/bootstrap-modal.js"></script>
-    <script src="bootstrap/js/bootstrap-dropdown.js"></script>
-    <script src="bootstrap/js/bootstrap-scrollspy.js"></script>
-    <script src="bootstrap/js/bootstrap-tab.js"></script>
-    <script src="bootstrap/js/bootstrap-tooltip.js"></script>
-    <script src="bootstrap/js/bootstrap-popover.js"></script>
-    <script src="bootstrap/js/bootstrap-button.js"></script>
-    <script src="bootstrap/js/bootstrap-collapse.js"></script>
-    <script src="bootstrap/js/bootstrap-carousel.js"></script>
-    <script src="bootstrap/js/bootstrap-typeahead.js"></script>
--->
-
-    <script src="esprima/esprima.js"></script>
-    <script src="develop-new.js"></script>
-    <!-- <script src="google-code-prettify/prettify.js"></script> -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="bootstrap/js/bootstrap.js"></script>
+<script src="esprima/esprima.js"></script>
+<script src="develop-new.js"></script>
 
   </body>
 </html>
