@@ -17,7 +17,7 @@ class DevelopApp(object):
             'package:seeitservices.develop:./static-develop/')
         self.register_url = register_url
         self.prefill_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             'prefill-data')
 
     @wsgify
@@ -35,6 +35,8 @@ class DevelopApp(object):
             return self.register_all(req)
         if req.path_info.startswith('/api/copy-prefill'):
             return self.copy_prefill(req)
+        if req.path_info.startswith('/api/fill-prefill'):
+            return self.fill_prefill(req)
         return exc.HTTPNotFound()
 
     def get_script_filename(self, email, scriptname):
@@ -80,13 +82,22 @@ class DevelopApp(object):
                 fn = fn[len(dir):]
                 assert fn.startswith('/')
                 url = req.application_url + '/api/scripts' + fn
-                resp.write('Added URL: %s\n' % url)
+                resp.write('  registering URL: %s\n' % url)
                 send_request(req, self.register_url, url)
         return resp
 
     def copy_prefill(self, req):
-        resp = Response(content_type='text/plain', body='Copying prefill\n')
-        dir = os.path.normcase(os.path.abspath(self.prefill_dir))
+        resp = Response(content_type='text/plain', body='Copying prefill from %s\n' % self.prefill_dir)
+        force = req.params.get('force')
+        return self.copy_files(resp, force, self.prefill_dir, self.dir)
+
+    def fill_prefill(self, req):
+        resp = Response(content_type='text/plain', body='Filling prefill from %s\n' % self.dir)
+        force = req.params.get('force', True)
+        return self.copy_files(resp, force, self.dir, self.prefill_dir)
+
+    def copy_files(self, resp, force, source_dir, dest_dir):
+        dir = os.path.normcase(os.path.abspath(source_dir))
         for dirpath, dirnames, filenames in os.walk(dir):
             if '.git' in dirnames:
                 dirnames.remove('.git')
@@ -96,20 +107,23 @@ class DevelopApp(object):
                 new_fn = fn[len(dir):]
                 assert new_fn.startswith('/')
                 new_fn = new_fn.strip('/')
-                new_fn = os.path.join(self.dir, new_fn)
+                new_fn = os.path.join(dest_dir, new_fn)
                 if not os.path.exists(os.path.dirname(new_fn)):
-                    os.path.makedirs(os.path.dirname(new_fn))
+                    resp.write('  Creating %s/\n' % os.path.dirname(new_fn))
+                    os.makedirs(os.path.dirname(new_fn))
                 if os.path.exists(new_fn):
                     with open(new_fn, 'rb') as fp:
                         new_content = fp.read()
                     with open(fn, 'rb') as fp:
                         old_content = fp.read()
                     if new_content == old_content:
-                        resp.write('%s already up-to-date\n' % new_fn)
-                    else:
-                        resp.write('Copying %s to %s (overwrite)\n' % (fn, new_fn))
+                        resp.write('  %s already up-to-date\n' % new_fn)
+                    elif force:
+                        resp.write('  Copying %s to %s (overwrite)\n' % (fn, new_fn))
                         shutil.copy(fn, new_fn)
+                    else:
+                        resp.write('  %s not up-to-date, leaving\n' % new_fn)
                 else:
-                    resp.write('Copying %s to %s\n' % (fn, new_fn))
+                    resp.write('  Copying %s to %s\n' % (fn, new_fn))
                     shutil.copy(fn, new_fn)
         return resp
