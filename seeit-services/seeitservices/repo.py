@@ -163,14 +163,7 @@ class Application(object):
 
     @wsgify
     def register(self, req):
-        if req.body.startswith('http'):
-            js_url = req.body
-            if re.match(r'^https?%3a', js_url, re.I):
-                ## Fixes form corruption:
-                js_url = urllib.unquote(js_url)
-                js_url = js_url.rstrip('=')
-        else:
-            js_url = req.params.get('url')
+        js_url = get_url(req)
         if not js_url:
             return exc.HTTPBadRequest('No url parameter provided')
         data = send_request(req, js_url)
@@ -187,10 +180,7 @@ class Application(object):
 
     @wsgify
     def register_consumer(self, req):
-        if req.body.startswith('http'):
-            url = req.body
-        else:
-            url = req.params.get('url')
+        url = get_url(req)
         if not url:
             return exc.HTTPBadRequest('No url parameter provided')
         body = send_request(req, url)
@@ -208,3 +198,15 @@ class Application(object):
         return Response(
             content_type='text/plain',
             body='Added %s at %s' % (data.get('name'), url))
+
+
+def get_url(req):
+    if req.body.startswith('http'):
+        js_url = req.body
+        if re.match(r'^https?%3a', js_url, re.I):
+            ## Fixes form corruption:
+            js_url = urllib.unquote(js_url)
+            js_url = js_url.rstrip('=')
+    else:
+        js_url = req.params.get('url')
+    return js_url
