@@ -10,16 +10,13 @@ from seeitservices.mapper import Mapper
 class DispatcherApp(object):
 
     def __init__(self, secret_filename='/tmp/seeit-services/secret.txt',
-                 config_file='mapper.ini', run_setup=False, **vars):
+                 config_file='mapper.ini', **vars):
         self._secret_filename = secret_filename
         self.static_app = ServeStatic(__name__, 'static-auth', '/static-auth')
         self.config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                         config_file)
         self.mapper = Mapper(vars=vars)
         self.mapper.add_configs(self.config_file)
-        if run_setup:
-            req = Request.blank('http://internal/setup')
-            print req.send(self.setup).body
 
     @wsgify
     def __call__(self, req):

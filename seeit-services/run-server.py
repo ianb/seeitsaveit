@@ -6,6 +6,7 @@ site.addsitedir(os.path.join(here, 'vendor'))
 site.addsitedir(os.path.join(here, 'vendor-binary'))
 
 from seeitservices.wsgiapp import DispatcherApp
+import webob
 import optparse
 
 
@@ -15,6 +16,7 @@ parser = optparse.OptionParser(
 parser.add_option('-H', '--host', metavar='HOST', default='localhost')
 parser.add_option('-p', '--port', metavar='PORT', default='8080')
 parser.add_option('--dir', metavar='DIRECTORY', default='./data')
+parser.add_option('--setup', action='store_true')
 
 
 def main():
@@ -24,6 +26,9 @@ def main():
         name, value = arg.split('=', 1)
         vars[name] = value
     app = DispatcherApp(**vars)
+    if options.setup:
+        req = webob.Request.blank('http://%s:%s/setup' % (options.host, options.port))
+        print req.send(app).body
     try:
         from paste.httpserver import serve
         print 'Using paste.httpserver'
