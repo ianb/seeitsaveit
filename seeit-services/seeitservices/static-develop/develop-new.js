@@ -49,7 +49,6 @@ function setDocument(doc, extraScript) {
   console.log('setDocument(', doc.location, extraScript, ')');
   var location = doc.location;
   doc.domain = getDomain(location);
-  checkServerScript();
   $('#url').text(location);
   var page = makePage(doc, extraScript);
   var w = iwindow();
@@ -67,8 +66,10 @@ function setDocument(doc, extraScript) {
       $.ajax({
         url: doc.js,
         type: 'GET',
+        dataType: 'text',
         success: function (resp) {
           $('#script').val(resp);
+          saveStatus.setSaved();
         },
         error: function (req, status, error) {
           console.log('Error loading script', doc.js, 'error:', error);
@@ -77,14 +78,15 @@ function setDocument(doc, extraScript) {
     }
   } else if ($('#script').val() == DEFAULT_SCRIPT) {
     $('#script').val(renderDefaultScript());
+    saveStatus.setSaved();
   }
   if (! extraScript) {
     // FIXME: this is kind of an ad hoc way to decide this
     iframeLoad(function () {
-      console.log('sending bindclick');
       iwindow().postMessage("bindclick", "*");
     });
   }
+  checkServerScript();
   inInspectHighlight = false;
 }
 
@@ -137,17 +139,14 @@ function encodeData(content_type, data) {
 
 function executeScript() {
   var s = $('#script').val();
-  console.log('executing', s);
   try {
     esprima.parse(s);
   } catch (e) {
     showResult({error: e+''});
     return;
   }
-  console.log('reseting iframe');
   setDocument(null, s);
   iframeLoad(function () {
-    console.log('sending scrape');
     iwindow().postMessage("scrape", "*");
   });
 }
@@ -179,7 +178,6 @@ function activateShowSelector(value) {
   if (! value) {
     return;
   }
-  console.log('sending selector', value);
   iwindow().postMessage('showselector:' + value, "*");
 }
 
@@ -246,7 +244,6 @@ function showSelector(data) {
 }
 
 $(function () {
-  console.log('setting up onload');
   $('#execute').click(function () {
     executeScript();
     return false;
@@ -254,7 +251,7 @@ $(function () {
   $('#selectors').change(function () {
     activateShowSelector(this.value);
   });
-  $('#showselector').change(function () {
+  $('#showselector').keyup(function () {
     activateShowSelector(this.value);
   });
   $('#iframe').height($(document).height()-68);
@@ -271,18 +268,42 @@ $(function () {
   $('#load-overwrite').click(loadOverwriteClicked);
   if (! $('#script').val()) {
     $('#script').val(DEFAULT_SCRIPT);
+    saveStatus.setSaved();
   }
+  $('#script').keyup(function () {
+    saveStatus.checkSaved();
+  });
 });
+
+var saveStatus = {
+  showingSaved: false,
+  savedText: null,
+  setSaved: function () {
+    this.showingSaved = true;
+    this.savedText = $('#script').val();
+    $('#saver').text('Saved');
+  },
+  checkSaved: function () {
+    if (! Auth.email) {
+      $('#saver').text('Login to save');
+      return;
+    }
+    if (this.showingSaved && this.savedText != $('#script').val()) {
+      this.showingSaved = false;
+      $('#saver').text('Save');
+    }
+  }
+};
 
 function onauthready() {
   Auth.onlogin = function (email) {
-    console.log('logged in', Auth.authData);
     $('#login').text(email);
+    saveStatus.checkSaved();
   };
 
   Auth.onlogout = function () {
-    console.log('logged out', Auth.authData);
     $('#login').text('login');
+    saveStatus.checkSaved();
   };
 }
 
@@ -291,10 +312,12 @@ function checkServerScript() {
     $.ajax({
       url: scriptURL(),
       type: "GET",
+      dataType: 'text',
       success: function (resp, status, req) {
         if ($('#script').val() == DEFAULT_SCRIPT
             || $('#script').val() == renderDefaultScript()) {
           $('#script').val(resp);
+          saveStatus.setSaved();
         } else if (resp != $('#script').val()) {
           $('#load-domain').text(DOC.domain);
           $('#load-data').text(resp);
@@ -302,7 +325,9 @@ function checkServerScript() {
         }
       },
       error: function (req, status, error) {
-        // do nothing
+        if (status != 404) {
+          console.log('Error fetching URL; status:', status);
+        }
       }
     });
   }
@@ -315,16 +340,61 @@ function loadKeepClicked() {
 function loadOverwriteClicked() {
   $('#script').val($('#load-data').text());
   $('#load-question').modal('hide');
+  saveStatus.setSaved();
 }
 
-function scriptURL() {
+function parseMetadata(script, url) {
+  var functions = [];
+  var header = script.split('*/')[0];
+  var lastProperty = null;
+  var lines = script.split(/\n/g);
+  for (var i=0; i<lines.length; i++) {
+    var line = lines[i];
+    if (line.search(/[^\s]/) == -1) {
+      lastProperty = null;
+      continue;
+    }
+    if (line.search(/^\s*@/) != -1) {
+      var prop = line.trim().replace(/^@/, '');
+      var splitPos = prop.indexOf(' ');
+      var name = prop.substr(0, splitPos);
+      var value = prop.substr(splitPos).replace(/^\s*/, '');
+      if (name == 'function') {
+        functions.push({});
+      } else if (! functions.length) {
+        throw 'Bad line, first property must be @function: ' + line;
+      }
+      functions[functions.length-1][name] = value;
+      lastProperty = name;
+    } else if (lastProperty) {
+      var rstripLine = line.replace(/\s*$/, '');
+      functions[functions.length-1][lastProperty] += '\n' + rstripLine;
+    }
+  }
+  if (! functions.length) {
+    throw 'No @function defined in script';
+  }
+  return functions;
+}
+
+function scriptURL(domain) {
+  if (! domain) {
+    try {
+      domain = parseMetadata($('#script').val())[0].domain;
+    } catch (e) {
+      console.log('Error in metadata:', e);
+      domain = 'unknown';
+    }
+  }
+  if (domain == '*') {
+    domain = 'wildcard';
+  }
   return location.protocol + '//' + location.host + '/develop/api/scripts/' +
-    encodeURIComponent(Auth.email) + '/' + encodeURIComponent(DOC.domain) + '.js';
+    encodeURIComponent(Auth.email) + '/' + encodeURIComponent(domain) + '.js';
 }
 
 function saveClicked() {
   if (! Auth.email) {
-    $('#saver').text('Save (must log in)');
     return false;
   }
   $('#saver').text('Saving...').addClass('active');
@@ -332,8 +402,12 @@ function saveClicked() {
     type: 'PUT',
     url: scriptURL(),
     data: $('#script').val(),
+    processData: false,
+    contentType: 'text/plain',
+    dataType: 'text',
     success: function (resp, status, req) {
-      $('#saver').text('Save').removeClass('active');
+      $('#saver').removeClass('active');
+      saveStatus.setSaved();
     },
     error: function (req, status, error) {
       console.log('Error in PUT to', scriptURL(), 'status:', status, 'error:', error);
@@ -349,12 +423,14 @@ function registerClicked() {
     type: 'POST',
     url: REGISTER,
     data: scriptURL(),
+    dataType: 'text',
+    processData: false,
     success: function (resp, status, req) {
       $('#register').text('Registered').removeClass('active');
     },
     error: function (req, status, error) {
-      $('#register').text('Register failed').removeClass('active');
       console.log('Error in POST to', REGISTER, 'status:', status, 'error:', error);
+      $('#register').text('Register failed').removeClass('active');
     }
   });
 }
@@ -403,7 +479,6 @@ function inspectElement(element) {
     code.on('click', function () {
       var id = element.elId;
       inInspectHighlight = true;
-      console.log('elId', element.elId+'');
       iwindow().postMessage('highlight:' + JSON.stringify({elId: element.elId}), "*");
     });
     /*code.on('mouseout', function () {
