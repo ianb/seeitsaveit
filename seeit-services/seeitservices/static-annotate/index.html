@@ -1,9 +1,61 @@
-<html>
-<head>
-<title>Annotate Stuff</title>
-</head>
-<body>
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>Annotate</title>
+  <link href="/develop/bootstrap/css/bootstrap.css" rel="stylesheet">
+  <style>
 
-<h1>Annotate Stuff</h1>
+body {
+  padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+}
+
+  </style>
+  <script>
+
+function onauthready() {
+  Auth.onlogin = function (email) {
+    $('#login').text(email);
+  };
+  Auth.onlogout = function () {
+    $('#login').text('login');
+  };
+}
+
+  </script>
+ </head>
+ <body>
+
+<div class="navbar navbar-fixed-top">
+ <div class="navbar-inner">
+  <div class="container">
+   <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+    <span class="icon-bar"></span>
+    <span class="icon-bar"></span>
+    <span class="icon-bar"></span>
+   </a>
+   <span class="brand">Annotate</span>
+   <div class="nav-collapse">
+    <!--
+    <ul class="nav">
+     <li><a id="saver" href="#">Save</a></li>
+     <li><a id="register" href="#">Register</a></li>
+    </ul>
+    -->
+    <ul class="nav pull-right">
+     <li><a href="#" id="login">-</a></li>
+    </ul>
+   </div><!--/.nav-collapse -->
+  </div>
+ </div>
+</div>
+
+<div class="container">
+  Not much to see on the front page right now.
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<!-- FIXME: don't hardcode this URL: -->
+<script src="/develop/bootstrap/js/bootstrap.js"></script>
 
 </body> </html>

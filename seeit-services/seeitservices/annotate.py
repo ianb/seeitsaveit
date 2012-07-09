@@ -1,10 +1,11 @@
 import os
+import cgi
 import urllib
-import re
-import datetime
 import logging
 from webob import exc
-from seeitservices.util import json, wsgify, Response, ServeStatic
+from seeitservices.util import json, wsgify, Response, write_file
+from seeitservices.subber import Subber
+from tempita import HTMLTemplate
 
 logger = logging.getLogger('annotate')
 
@@ -15,291 +16,135 @@ class Annotate(object):
 
     def __init__(self, dir):
         self.dir = dir
-        self.static_app = ServeStatic(__name__, "static-annotate")
+        self.static_app = Subber(
+            'package:seeitservices.annotate:./static-annotate/')
 
     @wsgify
     def __call__(self, req):
         req.charset = None
-        if req.path_info_peek() == 'store':
-            return self.store(req)
+        peek = req.path_info_peek()
+        if peek == 'save':
+            return self.save(req)
+        elif peek == 'page':
+            return self.page(req)
+        elif peek == 'annotation':
+            return self.annotation(req)
         if req.path_info == '/describe':
             return self.describe(req)
         return self.static_app
+
+    def split_path(self, req, prefix):
+        path = req.path_info.strip('/')
+        assert path.startswith(prefix + '/')
+        path = path[len(prefix):].strip('/')
+        email, rest = path.split('/', 1)
+        return email, rest
+
+    def make_filename(self, type, email, path):
+        path = os.path.join(self.dir, type, urllib.quote(email, ''),
+                            urllib.quote(path, ''))
+        assert os.path.abspath(path).startswith(os.path.abspath(self.dir))
+        return path
 
     @wsgify
     def describe(self, req):
         data = dict(
             name='Annotate a document',
-            post=req.application_url + '/store',
+            sendToPage=req.application_url + '/create.html',
+            sendToPageFunction='savePage',
             types=['html'],
             )
         return Response(json=data)
 
-    def store(self, req):
-        auth = AuthDomain.from_request(req, self)
-        authorized = auth.without_lock
-        add_cookie = None
-        if authorized:
-            add_cookie = auth.add_authorization()
-        else:
-            authorized, add_cookie = auth.authorize()
-        if not authorized:
-            if auth.has_users():
-                resp = Response(
-                    status=403,
-                    body=open(os.path.join(here, 'login.html')).read())
-            else:
-                resp = exc.HTTPForbidden()
-        elif 'getlink' in req.params:
-            resp = Response(
-                content_type='application/json',
-                body=json.dumps(dict(url=auth.make_link())))
-        else:
-            resp = self.store_response(req, auth)
-        if add_cookie:
-            resp.set_cookie(add_cookie[0], add_cookie[1], max_age=datetime.timedelta(days=10 * 365))
-        if not req.email and req.cookies.get(self.auth_app.cookie_name):
-            logger.debug('Invalid cookie: %r' % req.cookies.get(self.auth_app.cookie_name))
-            ## Invalid cookie:
-            resp.delete_cookie(self.auth_app.cookie_name)
-        return resp
+    @wsgify
+    def save(self, req):
+        if not req.email:
+            return Response(
+                status=403,
+                content_type='text/plain',
+                body='Not logged in')
+        email, path = self.split_path(req, 'save')
+        if email != req.email:
+            return Response(
+                status=403,
+                content_type='text/plain',
+                body='Email not correct (%r, not %r)' % (req.email, email))
+        if req.method != 'PUT':
+            return exc.HTTPMethodNotAllowed(allow='PUT')
+        data = req.json
+        filename = self.make_filename('page', email, path)
+        write_file(filename, json.dumps(data))
+        location = req.application_url + '/page/' + urllib.quote(email) + '/' + urllib.quote(path, '')
+        return Response(
+            json={'location': location})
 
-    def store_response(self, req, auth):
-        url = auth.url
-        fn = auth.filename
+    page_template = HTMLTemplate('''\
+<html>
+ <head>
+  <meta charset="UTF-8">
+  <base href="{{location}}">
+  {{head | html}}
+  <link href="{{application_url}}/annotate.css" rel="stylesheet" type="text/css">
+ </head>
+ <body{{body_attrs | html}}>
+  {{body | html}}
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script src="{{application_url}}/annotate.js"></script>
+  <script>annotationUrl = {{repr(annotation_url)}};</script>
+  {{auth_html | html}}
+ </body>
+</html>
+''')
+
+    @wsgify
+    def page(self, req):
+        email, path = self.split_path(req, 'page')
+        filename = self.make_filename('page', email, path)
+        if not os.path.exists(filename):
+            return exc.HTTPNotFound()
+        with open(filename, 'rb') as fp:
+            data = json.loads(fp.read())
+        if data['data'].get('bodyAttrs'):
+            body_attrs = [
+                ' %s="%s"' % (name, cgi.escape(value))
+                for name, value in data['data']['bodyAttrs'].items()]
+        else:
+            body_attrs = ''
+        page = self.page_template.substitute(
+            location=data['location'],
+            head=data['data']['head'],
+            application_url=req.application_url,
+            body_attrs=body_attrs,
+            body=data['data']['body'],
+            auth_html=req.get_sub('auth'),
+            annotation_url=req.url.replace('/page/', '/annotation/'),
+            )
+        return Response(page)
+
+    @wsgify
+    def annotation(self, req):
+        email, path = self.split_path(req, 'annotation')
+        filename = self.make_filename('annotation', email, path)
+        if not os.path.exists(filename):
+            data = {'annotations': []}
+        else:
+            with open(filename, 'rb') as fp:
+                data = json.loads(fp.read())
         if req.method == 'GET':
-            if not os.path.exists(fn):
-                logger.debug('not found: %s' % fn)
-                return exc.HTTPNotFound()
-            with open(fn, 'rb') as fp:
-                content_type = fp.readline().strip()
-                ui_type = fp.readline().strip().lower()
-                body = fp.read()
-                if ui_type:
-                    ui_type_method = getattr(self, 'ui_type_' + ui_type)
-                    body = ui_type_method(body, req, url)
-                return Response(
-                    cache_expires=True,
-                    content_type=content_type,
-                    body=body)
+            return Response(json=data)
         elif req.method == 'POST':
-            content_type = req.str_POST.get('content-type', 'text/html')
-            if '_charset_' in req.str_POST:
-                content_type += '; charset=' + req.str_POST['_charset_']
-            body = req.str_POST['body']
-            ui_type = req.POST.get('ui-type', 'raw')
-            with open(fn, 'wb') as fp:
-                fp.write(content_type.strip() + '\n')
-                fp.write(ui_type.strip() + '\n')
-                fp.write(body)
-            logger.debug('redirecting to: %s' % url)
-            return Response(
-                cache_expires=True,
-                status=303,
-                location=url)
-        elif req.method == 'PUT':
-            # FIXME: should figure out content-type, ui_type
-            content_type = 'application/json'
-            ui_type = 'raw'
-            body = req.body
-            with open(fn, 'wb') as fp:
-                fp.write(content_type.strip() + '\n')
-                fp.write(ui_type.strip() + '\n')
-                fp.write(body)
-            return Response(
-                cache_expires=True,
-                status=201,
-                location=url)
+            req_data = req.json
+            if req_data.get('annotations'):
+                data['annotations'].extend(req_data['annotations'])
+            if req_data.get('deletes'):
+                for delete in req_data['deletes']:
+                    for ann in list(data['annotations']):
+                        if ann['id'] == delete['id']:
+                            data['annotations'].remove(ann)
+            if not os.path.exists(os.path.dirname(filename)):
+                os.makedirs(os.path.dirname(filename))
+            with open(filename, 'wb') as fp:
+                fp.write(json.dumps(data))
+            return Response(json=data)
         else:
-            return exc.HTTPMethodNotAllowed(
-                allow='GET,POST')
-
-    def ui_type_annotation(self, body, req, url):
-        body += ('\n<script>runComments = {app: %(app)r, page: %(page)r};</script>\n'
-                 '<script src="https://browserid.org/include.js"></script>\n'
-                 '<script src="%(app)s/auth/wsgibrowserid.js"></script>\n'
-                 '<script src="%(app)s/code.js"></script>\n'
-                 '<link rel="application-manifest" href="%(app)s/manifest.webapp">\n'
-                 % dict(app=req.application_url, page=url))
-        return body
-
-    def ui_type_raw(self, body, req, url):
-        return body
-
-
-class AuthDomain(object):
-    """This represents a set of files that all have the same
-    authorization access.  Each domain has a name (what goes in
-    /a/{domain}/filename)
-    """
-
-    def __init__(self, lock, path, req, server, without_lock=False):
-        assert re.match(r'^[a-zA-Z0-9_]+$', lock)
-        self.lock = lock
-        self.path = path
-        self.req = req
-        self.server = server
-        self.without_lock = without_lock
-
-    @property
-    def url(self):
-        path = urllib.quote(self.path)
-        if not path.startswith('/'):
-            path = '/' + path
-        return self.req.application_url + '/a/%s%s' % (self.lock, path)
-
-    @classmethod
-    def from_request(cls, req, server):
-        """Creates an auth object from the request path
-        """
-        path = req.path_info
-        if not path.startswith('/a/'):
-            lock = generate_key()
-            without_lock = True
-            rest = path.lstrip('/')
-        else:
-            without_lock = False
-            rest = path[3:]
-            if '/' not in rest:
-                lock = rest
-                rest = ''
-            else:
-                lock, rest = rest.split('/', 1)
-        auth = cls(lock, rest, req, server, without_lock=without_lock)
-        return auth
-
-    def has_users(self):
-        """True if, by logging in, you might be able to access this"""
-        fn = os.path.join(self.server.dir, self.lock + '.authorization')
-        return os.path.exists(fn)
-
-    def add_authorization(self):
-        """When a request is considered authorized, generate the cookie
-        to make this client authorized (if needed)
-
-        Cookie is returned as (cookie_name, value)"""
-        if self.req.email:
-            users = self.get_metadata('authorization') or []
-            if self.req.email not in users:
-                users.append(self.req.email)
-                self.save_metadata(users, 'authorization')
-            c = urllib.unquote(self.req.cookies.get('explicitauth', ''))
-            new_cookie = []
-            for op in c.split(','):
-                if op.strip() and ':' in op:
-                    lock, sig = op.split(':', 1)
-                    if lock != self.lock:
-                        new_cookie.append(op)
-            return ('explicitauth', ','.join(new_cookie))
-        else:
-            c = urllib.unquote(self.req.cookies.get('explicitauth', ''))
-            if c:
-                c += ','
-            c += self.lock + ':' + self.server.make_sig(self.lock)
-            return ('explicitauth', urllib.quote(c))
-
-    def authorize(self):
-        """Checks if a request is authorized, and may generate a cookie
-        as part of that authorization.
-
-        Returns (authorized, (cookie_name, value)) or (authorized, None)
-        """
-        if self._check_cookie_auth():
-            if self.req.email:
-                add_cookie = self.add_authorization()
-                return (True, add_cookie)
-            return (True, None)
-        if self._check_user_auth():
-            return (True, None)
-        if self._check_link_auth():
-            add_cookie = self.add_authorization()
-            return (True, add_cookie)
-        return (False, None)
-
-    def _check_cookie_auth(self):
-        c = urllib.unquote(self.req.cookies.get('explicitauth', ''))
-        ops = c.split(',')
-        for op in ops:
-            op = op.strip()
-            if not op:
-                continue
-            if ':' not in op:
-                logger.debug('Bad cookie value: %r' % op)
-                continue
-            lock, sig = op.split(':', 1)
-            if lock == self.lock:
-                ## FIXME: check email here, add if possible
-                return self.server.check_sig(lock, sig)
-        return False
-
-    def _check_user_auth(self):
-        email = self.req.email
-        if not email:
-            return False
-        ## FIXME: not really secure?
-        users = self.get_metadata('authorization')
-        return users and email in users
-
-    def _check_link_auth(self):
-        linkauth = self.req.params.get('auth')
-        if not linkauth:
-            return False
-        links = self.get_metadata('links')
-        if not links or linkauth not in links:
-            return False
-        ## FIXME: might be nice to check that cookie is set first:
-        links.remove(linkauth)
-        self.save_metadata(links, 'links')
-        return True
-
-    def make_link(self):
-        links = self.get_metadata('links') or []
-        ## FIXME: it's not a new auth really:
-        link_key = generate_key()
-        links.append(link_key)
-        self.save_metadata(links, 'links')
-        url = self.url
-        url += '?auth=' + urllib.quote(link_key)
-        return url
-
-    def get_metadata(self, type):
-        fn = os.path.join(self.server.dir, self.lock + '.' + type)
-        if not os.path.exists(fn):
-            return None
-        with open(fn, 'rb') as fp:
-            return json.load(fp)
-
-    def save_metadata(self, value, type):
-        fn = os.path.join(self.server.dir, self.lock + '.' + type)
-        with open(fn, 'wb') as fp:
-            json.dump(value, fp)
-
-    @property
-    def filename(self):
-        path = urllib.quote(self.path, '')
-        dir = os.path.join(self.server.dir, urllib.quote(self.lock, ''))
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        path = os.path.join(dir, path)
-        return path
-
-
-def generate_key(length=10):
-    name = os.urandom(length)
-    name = name.encode('base64').replace('\n', '').replace('=', '1').replace('/', '2').replace('+', '3')
-    name = name[:length]
-    return name
-
-
-if __name__ == '__main__':
-    from wsgiref import simple_server
-    data = os.path.join(here, 'annotation-data')
-    if not os.path.exists(data):
-        os.makedirs(data)
-    app = Application(data)
-    wsgi_server = simple_server.make_server('127.0.0.1', 8080, app)
-    print 'server on http://localhost:8080'
-    try:
-        wsgi_server.serve_forever()
-    except KeyboardInterrupt:
-        pass
+            return exc.HTTPMethodNotAllowed(allow='GET,POST')
