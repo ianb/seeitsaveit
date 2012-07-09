@@ -38,7 +38,7 @@ class DispatcherApp(object):
 
     def set_auth(self, req):
         req.add_sub(
-            ['text/html'],
+            'auth',
             '</body>',
             ('<script src="https://browserid.org/include.js"></script>'
              '<script src="%s/static-auth/auth.js"></script>'
@@ -46,7 +46,7 @@ class DispatcherApp(object):
              '</body>') % (
                 req.application_url,
                 req.application_url + '/auth'))
-        auth = req.params.get('auth')
+        auth = req.GET.get('auth')
         if not auth:
             return
         if '.' in auth:

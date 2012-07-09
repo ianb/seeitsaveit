@@ -24,10 +24,16 @@ class Request(webob.Request):
     root = descriptors.environ_getter('seeitservices.root', None)
     sub_key = descriptors.environ_getter('subber.key', None)
 
-    def add_sub(self, content_types, old, new):
+    def add_sub(self, name, old, new, content_types=('text/html',)):
         if 'subber.subs' not in self.environ:
-            self.environ['subber.subs'] = []
-        self.environ['subber.subs'].append((content_types, old, new))
+            self.environ['subber.subs'] = {}
+        self.environ['subber.subs'][name] = (old, new, content_types)
+
+    def get_sub(self, name):
+        data = self.environ['subber.subs'].get(name)
+        if not data:
+            return None
+        return data[1]
 
     @property
     def email(self):
