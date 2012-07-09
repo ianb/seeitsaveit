@@ -190,7 +190,10 @@ class Application(object):
             import sys
             print >> sys.stderr, 'Bad data for url %s: %r' % (url, body)
             raise
-        data['post'] = urlparse.urljoin(url, data['post'])
+        if 'post' in data:
+            data['post'] = urlparse.urljoin(url, data['post'])
+        if 'sendToPage' in data:
+            data['sendToPage'] = urlparse.urljoin(url, data['sendToPage'])
         data['url'] = url
         consumers = self.consumers
         consumers[url] = data
