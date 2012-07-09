@@ -69,7 +69,8 @@ class Subber(object):
             or os.path.getmtime(dest_file_path) < os.path.getmtime(source_file_path)):
             with open(source_file_path, 'rb') as fp:
                 content = fp.read()
-            for content_types, old_content, new_content in req.environ.get('subber.subs', []):
+            subs = req.environ.get('subber.subs', {})
+            for name, (old_content, new_content, content_types) in subs.iteritems():
                 content_type = mimetypes.guess_type(source_file_path)[0]
                 if content_types and content_type not in content_types:
                     continue
