@@ -39,6 +39,18 @@ a:hover {
   padding: 0;
 }
 
+a, a:link, a:visited, a:active {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+a:active {
+  color: #f00;
+}
+
     </style>
   </head>
   <body>
@@ -64,6 +76,7 @@ a:hover {
     <div id="consumers" style="display: none">
       Where do you want to send your data?
       <ul id="consumer-list"></ul>
+      <div id="consumer-detail"></div>
     </div>
 
     <div id="consumer-response">

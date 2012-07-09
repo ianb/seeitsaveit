@@ -38,14 +38,14 @@ self.port.on("Collect", function () {
   show("collecting");
 });
 
-self.port.on("Consumers", function (consumers, dataType) {
+self.port.on("Consumers", function (consumers, extractors) {
   var el = show('consumers', 'consumer-list');
+  var detail = getElement('consumer-detail');
+  detail.style.display = 'none';
   if (! consumers.length) {
-    el.appendChild(make('li', null, ['No consumers for type ' + dataType]));
-    return;
+    el.appendChild(make('li', null, ['No consumers available']));
   }
   consumers.forEach(function (consumer) {
-    var li = make('li');
     var button = make('button', {'type': 'button'},
       [(consumer.icon ? make('img', {src: consumer.icon}) : null),
        consumer.name || consumer.url]);
@@ -53,9 +53,33 @@ self.port.on("Consumers", function (consumers, dataType) {
       show('processing');
       self.port.emit("ConsumerChosen", consumer);
     }, false);
-    li.appendChild(button);
+    var li = make('li', null, [button, ' ']);
+    var anchor = make('a', {href: '#'}, ['about']);
+    anchor.addEventListener('click', function () {
+      detail.style.display = '';
+      detail.innerHTML = 'Details:';
+      var detailUl = make('ul');
+      detail.appendChild(detailUl);
+      extractors.forEach(function (extractor) {
+        if (consumer.types.indexOf(extractor.type) != -1) {
+          var link = make('a', {href: extractor.js, title: extractor.js, target: '_blank'}, [extractor.js.replace(/.*\//, '')]);
+          var develop = make('a', {href: '#'}, ['develop']);
+          develop.addEventListener('click', function () {
+            self.port.emit("Develop", {js: extractor.js});
+          }, false);
+          var detailLi = make('li', null, [link, ' ', develop]);
+          detailUl.appendChild(detailLi);
+        }
+      });
+    });
+    li.appendChild(anchor);
     el.appendChild(li);
   });
+  var developNew = make('a', {href: '#'}, ['make something new...']);
+  developNew.addEventListener('click', function () {
+    self.port.emit("Develop");
+  }, false);
+  el.appendChild(developNew);
 });
 
 self.port.on("ConsumerResponse", function (response) {
