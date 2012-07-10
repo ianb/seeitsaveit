@@ -8,32 +8,35 @@ var Auth = {
     return null;
   },
   authUrl: null,
-  onsoftlogin: function () {},
-  _onlogin: function () {},
-  get onlogin() {
-    return this._onlogin;
+  onlogin: function () {},
+  onlogout: function () {},
+  onready: function () {},
+  request: function () {
+    navigator.id.request();
   },
-  set onlogin(value) {
-    this._onlogin = value;
-    if (this.authData) {
-      this._onlogin(this.email, this.authData);
+  watch: function (options) {
+    if (options.onlogin) {
+      this.onlogin = options.onlogin;
+      if (this.authData) {
+        this.onlogin(this.email, this.authData);
+      }
+    }
+    if (options.onlogout) {
+      this.onlogout = options.onlogout;
+      if (! this.authData) {
+        this.onlogout();
+      }
     }
   },
-  _onlogout: function () {},
-  get onlogout() {
-    return this._onlogout;
-  },
-  set onlogout(value) {
-    this._onlogout = value;
-    if (! this.authData) {
-      this._onlogout();
-    }
-  },
-  onready: function () {}
+  logout: function () {
+    navigator.id.logout();
+    this.authToken = this.authData = null;
+    this.onlogout();
+  }
 };
 
-if (localStorage['Auth.cachedData'] && localStorage['Auth.cachedData'] !== 'null') {
-  Auth.authData = JSON.parse(localStorage['Auth.cachedData']);
+if (localStorage.getItem('Auth.cachedData') && localStorage.getItem('Auth.cachedData') !== 'null') {
+  Auth.authData = JSON.parse(localStorage.getItem('Auth.cachedData'));
   Auth.authData.fromCache = true;
   Auth.onlogin(Auth.email, Auth.authData);
 }
@@ -55,9 +58,10 @@ navigator.id.watch({
       var result = JSON.parse(req.responseText);
       if (result.status != "okay") {
         Auth.onlogout();
+        return;
       }
       Auth.authData = result;
-      localStorage['Auth.cachedData'] = JSON.stringify(Auth.authData);
+      localStorage.setItem('Auth.cachedData', JSON.stringify(Auth.authData));
       Auth.onlogin(Auth.email, Auth.authData);
     };
     req.setRequestHeader('content-type', 'application/x-www-form-urlencoded');
@@ -66,14 +70,11 @@ navigator.id.watch({
   },
   onlogout: function () {
     Auth.authData = null;
-    localStorage['Auth.cachedData'] = null;
+    localStorage.removeItem('Auth.cachedData');
     Auth.onlogout();
   },
   onready: function () {
     Auth.onready();
-  },
-  request: function () {
-    navigator.id.request();
   }
 });
 
@@ -85,6 +86,7 @@ if (typeof $ !== "undefined" || typeof jQuery !== "undefined") {
     } else {
       var q = $;
     }
+
     q.ajaxPrefilter(function (options) {
       if (! Auth.authData) {
         return;
@@ -113,6 +115,12 @@ if (typeof $ !== "undefined" || typeof jQuery !== "undefined") {
           }
           options.headers[key] = auth.headers[key];
         }
+      }
+    });
+
+    q('body').ajaxError(function (event, xhr, ajaxSettings, thrownError) {
+      if (xhr && xhr.status == 401) {
+        Auth.logout();
       }
     });
   })();

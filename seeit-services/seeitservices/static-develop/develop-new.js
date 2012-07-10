@@ -296,15 +296,17 @@ var saveStatus = {
 };
 
 function onauthready() {
-  Auth.onlogin = function (email) {
-    $('#login').text(email);
-    saveStatus.checkSaved();
-  };
+  Auth.watch({
+    onlogin: function (email) {
+      $('#login').text(email);
+      saveStatus.checkSaved();
+    },
 
-  Auth.onlogout = function () {
-    $('#login').text('login');
-    saveStatus.checkSaved();
-  };
+    onlogout: function () {
+      $('#login').text('login');
+      saveStatus.checkSaved();
+    }
+  });
 }
 
 function checkServerScript() {

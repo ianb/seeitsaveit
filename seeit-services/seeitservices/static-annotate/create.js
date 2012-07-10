@@ -9,15 +9,17 @@ function savePage(data) {
 }
 
 function onauthready() {
-  Auth.onlogin = function (email) {
-    $('#login').text('Logged in as ' + email);
-    if (savedData) {
-      createAnnotation(email, savedData);
+  Auth.watch({
+    onlogin: function (email) {
+      $('#login').text('Logged in as ' + email);
+      if (savedData) {
+        createAnnotation(email, savedData);
+      }
+    },
+    onlogout: function () {
+      $('#login').text('You must log in: click here');
     }
-  };
-  Auth.onlogout = function () {
-    $('#login').text('You must log in: click here');
-  };
+  });
   $('#login').click(function () {
     navigator.id.request();
     return false;
