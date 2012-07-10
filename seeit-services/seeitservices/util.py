@@ -1,11 +1,12 @@
 import urlparse
-import urllib
+import urllib2
 import os
 import sys
 import base64
 from webob import dec
 from webob import descriptors
 import webob
+from cStringIO import StringIO
 try:
     import simplejson as json
 except ImportError:
@@ -24,10 +25,10 @@ class Request(webob.Request):
     root = descriptors.environ_getter('seeitservices.root', None)
     sub_key = descriptors.environ_getter('subber.key', None)
 
-    def add_sub(self, name, old, new, content_types=('text/html',)):
+    def add_sub(self, name, old, new, content_types=('text/html',), replace=True):
         if 'subber.subs' not in self.environ:
             self.environ['subber.subs'] = {}
-        self.environ['subber.subs'][name] = (old, new, content_types)
+        self.environ['subber.subs'][name] = (old, new, content_types, replace)
 
     def get_sub(self, name):
         data = self.environ['subber.subs'].get(name)
@@ -97,13 +98,18 @@ def send_request(app_req, url, post_data=None):
             new_req.body = post_data
         resp = new_req.send(start_app)
         if resp.status_code != 200:
-            raise Exception("Request to %s returned status: %s"
-                            % (url, resp.status))
+            raise urllib2.HTTPError(
+                url,
+                resp.status_code,
+                "Request to %s returned status: %s" % (url, resp.status),
+                resp.headers,
+                StringIO(resp.body))
         return resp.body
     else:
-        r = urllib.urlopen(url, post_data)
+        r = urllib2.urlopen(url, post_data)
         return r.read()
 
+send_request.Error = urllib2.HTTPError
 
 class ServeStatic(object):
 
