@@ -347,7 +347,7 @@ function parseMetadata(script, url) {
   var functions = [];
   var header = script.split('*/')[0];
   var lastProperty = null;
-  var lines = script.split(/\n/g);
+  var lines = header.split(/\n/g);
   for (var i=0; i<lines.length; i++) {
     var line = lines[i];
     if (line.search(/[^\s]/) == -1) {
@@ -378,9 +378,11 @@ function parseMetadata(script, url) {
 }
 
 function scriptURL(domain) {
+  var metadata = {};
   if (! domain) {
     try {
-      domain = parseMetadata($('#script').val())[0].domain;
+      metadata = parseMetadata($('#script').val())[0];
+      domain = metadata.domain;
     } catch (e) {
       console.log('Error in metadata:', e);
       domain = 'unknown';
@@ -388,6 +390,9 @@ function scriptURL(domain) {
   }
   if (domain == '*') {
     domain = 'wildcard';
+    if (metadata.type) {
+      domain += '_' + metadata.type;
+    }
   }
   return location.protocol + '//' + location.host + '/develop/api/scripts/' +
     encodeURIComponent(Auth.email) + '/' + encodeURIComponent(domain) + '.js';
