@@ -1,3 +1,74 @@
+/*
+auth.js
+Author: Ian Bicking <ianb@mozilla.com>
+
+This library wraps the navigator.id APIs from browserid.org
+
+The exposed object is Auth.  You will usually start out with a call to Auth.watch, like:
+
+function onauthready() {
+  Auth.authUrl = '/verify';
+  Auth.watch({
+    onlogin: function (email, authData) {
+      $('#login').text(email);
+    },
+    onlogout: function () {
+      $('#login').text('login');
+    }
+  });
+}
+
+if (typeof Auth !== "undefined") {
+  onauthready();
+}
+
+$('#login').click(function () {
+  if (Auth.email) {
+    Auth.logout();
+  } else {
+    Auth.request();
+  }
+});
+
+
+The onauthready() stuff protects you from depending on a specific
+order of auth.js and your script - if auth.js is included after your
+script then onauthready() will be called.  If auth.js is included
+before your script then Auth will be defined.  Note that
+https://browserid.org/include.js still must be included before auth.js.
+
+One of onlogout or onlogin will be run as soon as things are ready.
+When a successful login happens, and is confirmed with the server, the
+results will be stored locally.  On subsequent page loads this local
+data will be used and a login signaled immediately.
+
+To trigger a login call Auth.request() - this will cause a popup and
+login process that might take a while and may not succeed; onlogin
+will be called if it does.  To trigger a logout call Auth.logout()
+(onlogout will also be called, and quickly).
+
+The URL in authUrl is the location on the server where you verify the
+authentication.  It would look something like (in pseudocode):
+
+    def verify(request):
+      assertion = request.get('assertion')
+      audience = request.get('audience')
+      resp = POST('https://browserid.org/verify',
+                  'assertion=' + urlquote(assertion) +
+                  '&audience=' + urlquote(audience))
+      resp = json_decode(resp)
+      if resp['status'] == 'okay':
+        resp['auth'] = {'query': {'auth': sign(resp['email'])}}
+      return Response(content_type='application/json', body=json_encode(resp))
+
+This also has some integration with jQuery.  Once you've authenticated
+it will change any requests using $.ajax() to use the data in auth.
+With the pseudocode it would add a query string parameter
+"auth=signature".  It will also try to catch 401 responses and trigger
+an authentication refresh.
+
+*/
+
 var Auth = {
   authToken: null,
   authData: null,
@@ -10,7 +81,6 @@ var Auth = {
   authUrl: null,
   onlogin: function () {},
   onlogout: function () {},
-  onready: function () {},
   request: function () {
     navigator.id.request();
   },
@@ -27,6 +97,9 @@ var Auth = {
         this.onlogout();
       }
     }
+    if (options.authUrl) {
+      this.authUrl = options.authUrl;
+    }
   },
   logout: function () {
     navigator.id.logout();
@@ -41,6 +114,7 @@ if (localStorage.getItem('Auth.cachedData') && localStorage.getItem('Auth.cached
   Auth.onlogin(Auth.email, Auth.authData);
 }
 
+// FIXME: protect against https://browserid.org/include.js being included after this script?
 navigator.id.watch({
   loggedInEmail: Auth.email,
   onlogin: function (assertion) {
@@ -72,9 +146,6 @@ navigator.id.watch({
     Auth.authData = null;
     localStorage.removeItem('Auth.cachedData');
     Auth.onlogout();
-  },
-  onready: function () {
-    Auth.onready();
   }
 });
 
@@ -119,8 +190,8 @@ if (typeof $ !== "undefined" || typeof jQuery !== "undefined") {
     });
 
     q('body').ajaxError(function (event, xhr, ajaxSettings, thrownError) {
-      if (xhr && xhr.status == 401) {
-        Auth.logout();
+      if (xhr && xhr.status == 401 && Auth.email) {
+        Auth.request();
       }
     });
   })();
