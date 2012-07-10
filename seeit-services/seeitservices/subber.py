@@ -70,13 +70,16 @@ class Subber(object):
             with open(source_file_path, 'rb') as fp:
                 content = fp.read()
             subs = req.environ.get('subber.subs', {})
-            for name, (old_content, new_content, content_types) in subs.iteritems():
+            for name, (old_content, new_content, content_types, replace) in subs.iteritems():
                 content_type = mimetypes.guess_type(source_file_path)[0]
                 if content_types and content_type not in content_types:
                     continue
                 if not isinstance(new_content, basestring):
                     new_content = new_content(req)
-                content = content.replace(old_content, new_content)
+                if replace:
+                    content = content.replace(old_content, new_content)
+                else:
+                    content = content.replace(old_content, new_content + old_content)
             dest_dir = os.path.dirname(dest_file_path)
             if not os.path.exists(dest_dir):
                 os.makedirs(dest_dir)

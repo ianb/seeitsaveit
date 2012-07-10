@@ -42,10 +42,10 @@ class DispatcherApp(object):
             '</body>',
             ('<script src="https://browserid.org/include.js"></script>'
              '<script src="%s/static-auth/auth.js"></script>'
-             '<script>Auth.authUrl=%r</script>'
-             '</body>') % (
+             '<script>Auth.authUrl=%r</script>') % (
                 req.application_url,
-                req.application_url + '/auth'))
+                req.application_url + '/auth'),
+            replace=False)
         auth = req.GET.get('auth')
         if not auth:
             return
