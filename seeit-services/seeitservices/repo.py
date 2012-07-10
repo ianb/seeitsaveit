@@ -6,7 +6,6 @@ import urllib
 from seeitservices.util import wsgify, Response
 from webob import exc
 from seeitservices.util import json, JsonFile, ServeStatic, send_request
-from statusstorage import StatusStorage
 
 
 def parse_metadata(script, url):
@@ -80,7 +79,6 @@ class Application(object):
         self.transformer_fn = os.path.join(dir, 'transformers.json')
         self.consumers_fn = os.path.join(dir, 'consumers.json')
         self.directory_app = ServeStatic(__name__, 'static-repo')
-        self.status_capture = StatusStorage(os.path.join(dir, 'status'))
 
     @wsgify
     def __call__(self, req):
@@ -92,6 +90,8 @@ class Application(object):
             return self.register(req)
         if req.path_info == '/register-consumer':
             return self.register_consumer(req)
+        if req.path_info == '/check-all':
+            return self.check_all(req)
         if req.path_info_peek() == 'static':
             req.path_info_pop()
             return self.directory_app
@@ -201,6 +201,35 @@ class Application(object):
         return Response(
             content_type='text/plain',
             body='Added %s at %s' % (data.get('name'), url))
+
+    @wsgify
+    def check_all(self, req):
+        resp = Response(content_type='text/plain')
+        transformers = self.transformers
+        resp.write('Extractors:\n')
+        for url in list(transformers):
+            try:
+                send_request(req, url)
+            except send_request.Error:
+                del transformers[url]
+                resp.write('  bad  %s\n' % url)
+            else:
+                resp.write('  good %s\n' % url)
+        consumers = self.consumers
+        resp.write('Consumers:\n')
+        for url in list(consumers):
+            try:
+                send_request(req, url)
+            except send_request.Error:
+                del consumers[url]
+                resp.write('  bad  %s\n' % url)
+            else:
+                resp.write('  good %s\n' % url)
+        if 'commit' in req.GET:
+            self.transformers = transformers
+            self.consumers = consumers
+            resp.write('Bad items removed\n')
+        return resp
 
 
 def get_url(req):
