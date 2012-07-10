@@ -6,7 +6,7 @@ from seeitservices.util import JsonFile
 import tempita
 
 
-class StatusStorage(object):
+class GeneralStorage(object):
 
     def __init__(self, dir):
         self.dir = dir
