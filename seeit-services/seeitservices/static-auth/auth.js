@@ -150,7 +150,7 @@ navigator.id.watch({
 });
 
 // FIXME: I should add a failure filter to reauthenticate on failure
-if (typeof $ !== "undefined" || typeof jQuery !== "undefined") {
+if ((typeof $ !== "undefined" && $.ajax) || typeof jQuery !== "undefined") {
   (function () {
     if (typeof jQuery !== "undefined") {
       var q = jQuery;
