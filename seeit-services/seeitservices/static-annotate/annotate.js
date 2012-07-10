@@ -27,6 +27,31 @@ $(function () {
   }
 });
 
+function onauthready() {
+  if (! server) {
+    return;
+  }
+  var self = server;
+  Auth.onlogin = function () {
+    self.loginStatus.text(Auth.email + ' ');
+    var logoutEl = $('<a href="#">logout</a>').attr('style', styles.link);
+    self.loginStatus.append(logoutEl);
+    logoutEl.click(function () {
+      // FIXME: should I reload here?
+      Auth.logout();
+      return false;
+    });
+  };
+  Auth.onlogout = function () {
+    self.loginStatus.clear();
+    var loginEl = $('<a href="#">login</a>').attr('style', styles.link);
+    self.loginStatus.append(loginEl);
+    loginEl.click(function () {
+      Auth.request();
+    });
+  };
+}
+
 function Server(annotationUrl) {
   if (this === window) {
     throw 'You forgot new';
@@ -42,14 +67,17 @@ Server.prototype.getAnnotations = function () {
     type: 'GET',
     dataType: 'json',
     success: function (resp) {
-      var anns = [];
+      var anns = resp.annotations;
       for (var i=0; i<anns.length; i++) {
+        anns[i].fromServer = true;
         self.addAnnotation(anns[i]);
       }
+      console.log('Received', anns.length, 'annotations from server');
     },
     error: function (req, status, error) {
       if (req.status == 404) {
         // All okay, we just don't have annotations
+        console.log('No annotations on server');
         return;
       }
       console.log('Error getting annotations:', req.status, 'error:', error);
@@ -61,6 +89,7 @@ Server.prototype.addAnnotation = function (repr) {
   var obj = new Annotation(repr, this);
   obj.display();
   this.annotations.push(obj);
+  return obj;
 };
 
 Server.prototype.removeAnnotation = function (ann) {
@@ -71,28 +100,39 @@ Server.prototype.removeAnnotation = function (ann) {
 };
 
 Server.prototype.showPanel = function () {
+  var self = this;
   var baseHref = $('base').attr('href');
-  this.panel = $('<div style="position: fixed; top: 10px; right: 10px; height: 10em; zIndex: 10001">');
+  this.panel = $('<div style="position: fixed; top: 10px; right: 10px; height: 10em; zIndex: 10001"></div>');
   this.panel[0].annotateHide = true;
-  var innerDiv = $('<div>').attr('style', styles.base + styles.border + 'padding: 6px 3px 6px 3px;');
-  this.annotateButton = $('<span title="Make annotations on the page">Annotate</span>').attr('style', styles.bigButton);
-  innerDiv.append(this.annotateButton);
-  this.viewButton = $('<span title="View the page (without adding annotations)">View</span>').attr('style', styles.bigButton);
-  innerDiv.append(this.viewButton);
-  this.hideButton = $('<span title="Hide all the annotations">Hide</span>').attr('style', styles.bigButton);
-  var info = $('<div style="padding-top: 4px"></div>');
-  innerDiv.append(info);
-  this.infoButton = $('<div style="cursor: pointer">Info: &#9656;</span>');
-  info.append(this.infoButton);
-  this.infoDetails = $('<div></div>').hide();
-  info.append(this.infoDetails);
-  this.loginStatus = $('<span></span>');
-  info.append(this.loginStatus);
-  info.append($('<br>'));
-  info.append('URL: ');
-  info.append($('<a target="_blank"></a>').attr('style', styles.link).text(baseHref).attr('href', baseHref));
-  this.shareText = $('<input type="text">').hide();
-  info.append(this.shareText);
+  var innerDiv = $('<div></div>')
+    .attr('style', styles.base + styles.border + 'padding: 6px 3px 6px 3px;');
+  this.annotateButton = $('<span title="Make annotations on the page">Annotate</span>')
+    .attr('style', styles.bigButton)
+    .appendTo(innerDiv);
+  this.viewButton = $('<span title="View the page (without adding annotations)">View</span>')
+    .attr('style', styles.bigButton)
+    .appendTo(innerDiv);
+  this.hideButton = $('<span title="Hide all the annotations">Hide</span>')
+    .attr('style', styles.bigButton)
+    .appendTo(innerDiv);
+  var info = $('<div style="padding-top: 4px"></div>')
+    .appendTo(innerDiv);
+  this.infoButton = $('<span style="cursor: pointer">Info: &#9656;</span>')
+    .appendTo(info);
+  this.infoDetails = $('<div></div>')
+    .hide()
+    .appendTo(info);
+  this.loginStatus = $('<span></span>')
+    .appendTo(this.infoDetails);
+  this.infoDetails.append($('<br>'));
+  this.infoDetails.append('URL: ');
+  this.infoDetails.append($('<a target="_blank"></a>')
+    .attr('style', styles.link)
+    .text(baseHref)
+    .attr('href', baseHref));
+  this.shareText = $('<input type="text">')
+    .hide()
+    .appendTo(info);
   $('body').append(innerDiv);
 
   this.annotateButton.click(function () {
@@ -138,36 +178,14 @@ Server.prototype.showPanel = function () {
     });
     return false;
   }); */
+
   this.clickListener = this.clickEvent.bind(this);
   this.changeListener = this.changeEvent.bind(this);
   this.annotationForm = new AnnotationForm(this);
+  $('body').append(this.panel);
   this.setView('annotate');
+  this.panel.append(innerDiv);
 };
-
-function onauthready() {
-  if (! server) {
-    return;
-  }
-  var self = server;
-  Auth.onlogin = function () {
-    self.loginStatus.text(Auth.email + ' ');
-    var logoutEl = $('<a href="#">logout</a>').attr('style', styles.link);
-    self.loginStatus.append(logoutEl);
-    logoutEl.click(function () {
-      // FIXME: should I reload here?
-      Auth.logout();
-      return false;
-    });
-  };
-  Auth.onlogout = function () {
-    self.loginStatus.clear();
-    var loginEl = $('<a href="#">login</a>').attr('style', styles.link);
-    self.loginStatus.append(loginEl);
-    loginEl.click(function () {
-      Auth.request();
-    });
-  };
-}
 
 Server.prototype.clickEvent = function (ev) {
   var target = ev.target;
@@ -242,8 +260,8 @@ Server.prototype.setView = function (viewing) {
     this.turnOn(this.hideButton, 'Show');
     this.turnOff(this.annotateButton);
     this.turnOff(this.viewButton);
-    this.annotateButton.style.display = 'none';
-    this.viewButton.style.display = 'none';
+    this.annotateButton.hide();
+    this.viewButton.hide();
     this.hideAnnotations();
     this.annotationForm.hide();
     document.removeEventListener('click', this.clickListener, true);
@@ -253,8 +271,10 @@ Server.prototype.setView = function (viewing) {
 
 Server.prototype.turnOff = function (button, text) {
   button.show();
-  button[0].style.borderStyle = 'outset';
-  button[0].style.color = styles.bigButtonInactiveColor;
+  button.css({
+    borderStyle: 'outset',
+    color: styles.bigButtonInactiveColor
+  });
   if (text) {
     button.text(text);
   }
@@ -262,8 +282,10 @@ Server.prototype.turnOff = function (button, text) {
 
 Server.prototype.turnOn = function (button, text) {
   button.show();
-  button[0].style.borderStyle = 'inset';
-  button[0].style.color = styles.bigButtonActiveColor;
+  button.css({
+    borderStyle: 'inset',
+    color: styles.bigButtonActiveColor
+  });
   if (text) {
     button.text(text);
   }
@@ -284,13 +306,17 @@ Server.prototype.hideAnnotations = function () {
 Server.prototype.saveAnnotations = function (callback) {
   var repr = [];
   for (var i=0; i<this.annotations.length; i++) {
+    if (this.annotations[i].fromServer) {
+      continue;
+    }
     repr.push(this.annotations[i].repr);
   };
+  var data = {annotations: repr};
   $.ajax({
     url: this.annotationUrl,
     contentType: 'application/json',
-    type: 'PUT',
-    data: JSON.stringify(repr),
+    type: 'POST',
+    data: JSON.stringify(data),
     success: function () {
       callback();
     }
@@ -406,40 +432,47 @@ AnnotationForm.prototype.resetForm = function () {
 };
 
 AnnotationForm.prototype.setupDiv = function () {
-  this.div = $('<div style="position: absolute; top: 0px; left: 0px; display: none; zIndex: 10000"></div>');
+  this.div = $('<div style="position: absolute; top: 0px; left: 0px; display: none; z-index: 10000"></div>');
   this.div[0].annotateHide = true;
-  this.div.html('<div style="'+styles.base+styles.border+'">' +
-    '<textarea id="webannotate-text" style="width: 100%; height: 5em"></textarea> <br>' +
-    '<button style="'+styles.button+'" type="button" id="webannotate-save">Save</button>' +
-    '<button style="'+styles.button+'" type="button" id="webannotate-clear">Clear/Cancel</button>');
-  document.body.appendChild(this.div[0]);
-  this.text = $(document.getElementById('webannotate-text'));
-  this.saveButton = $(document.getElementById('webannotate-save'));
+  var inner = $('<div></div>')
+    .attr('style', styles.base + styles.border);
+  this.text = $('<textarea style="width: 100%; height: 3em;"></textarea>');
+  inner.append(this.text);
+  inner.append($('<br>'));
+  this.saveButton = $('<button type="button">Save</button>')
+    .attr('style', styles.button)
+    .appendTo(inner);
+  this.clearButton = $('<button type="button">Clear/Cancel</button>')
+    .attr('style', styles.button)
+    .appendTo(inner);
   this.saveButton.click(this.save.bind(this));
-  this.clearButton = document.getElementById('webannotate-clear');
   this.clearButton.click(this.clear.bind(this));
+  this.div.append(inner);
+  $('body').append(this.div);
 };
 
 AnnotationForm.prototype.save = function () {
-  if (! this.text.value) {
+  if (! this.text.val()) {
     // FIXME: or treat as cancel?
     return;
   }
   this.resetForm();
-  server.addAnnotation({selector: this.selector, text: this.text.value});
-  server.saveAnnotations(this.clear.bind(this));
+  console.log('added', this.server.addAnnotation({selector: this.selector, text: this.text.val()})+'');
+  this.server.saveAnnotations(this.clear.bind(this));
 };
 
 AnnotationForm.prototype.clear = function () {
   this.resetForm();
-  this.text.value = '';
+  this.text.val('');
   this.hide();
 };
 
 AnnotationForm.prototype.position = function (pos, selector) {
-  this.div[0].style.top = pos.top + 'px';
-  this.div[0].style.left = pos.left + 'px';
   this.div.show();
+  this.div.css({
+    top: pos.top + 'px',
+    left: pos.left + 'px'
+  });
   this.selector = selector;
   this.text.focus();
 };
@@ -453,6 +486,10 @@ function Annotation(repr, server) {
   this.server = server;
   this.div = null;
   this.rangePosition = null;
+};
+
+Annotation.prototype.toString = function () {
+  return '[Annotation ' + JSON.stringify(this.repr) + ']';
 };
 
 Annotation.prototype.display = function () {
@@ -545,7 +582,7 @@ Annotation.prototype.compact = function () {
   this.viewState = 'small';
   this.compact();
   this.controlDiv.hide();
-  this.div.style.zIndex = '9990';
+  this.div.css({zIndex: '9990'});
   if (this.rangePosition) {
     highlightAnnotationRange(this.rangePosition, styles.annotationBackground);
   }
@@ -829,6 +866,7 @@ function splitTextBetween(el, start, end) {
 }
 
 function getElementPosition(el) {
+  var el = el[0];
   var top = 0;
   var left = 0;
   while (el) {
