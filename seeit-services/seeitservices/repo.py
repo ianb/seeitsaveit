@@ -119,7 +119,8 @@ class Application(object):
                 if isinstance(domains, basestring):
                     domains = [domains]
                 for domain in domains:
-                    if url_domain == domain or domain == '*':
+                    if (url_domain == domain or domain == '*'
+                        or domain.startswith('.') and url_domain.endswith(domain)):
                         matches.append(func_data)
                         done = True
                         break
