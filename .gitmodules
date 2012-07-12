@@ -7,3 +7,9 @@
 [submodule "seeit-services/seeitservices/static-develop/esprima"]
 	path = seeit-services/seeitservices/static-develop/esprima
 	url = https://github.com/ariya/esprima.git
+[submodule "seeit-services/submodules/logdb"]
+	path = seeit-services/submodules/logdb
+	url = git@github.com:ianb/logdb.git
+[submodule "seeit-services/seeitservices/static-develop/doctestjs"]
+	path = seeit-services/seeitservices/static-develop/doctestjs
+	url = git@github.com:ianb/doctestjs.git

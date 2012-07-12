@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Test jseeitsaveit.js</title>
+    <script src="doctestjs/doctest.js"></script>
+    <script src="esprima/esprima.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="jseeitsaveit.js"></script>
+    <link href="doctestjs/doctest.css" rel="stylesheet">
+  </head>
+  <body class="autodoctest">
+
+    <h1>Test</h1>
+
+    <pre class="commenttest">
+
+print($('#test-1').html());
+/* =>
+
+        &lt;a href="http://google.com">google link&lt;/a>
+        &lt;a href="javascript:alert('hey')">JS link&lt;/a>
+        &lt;span style="color: #f00">red text&lt;/span>
+        &lt;iframe src="about:blank">inner content&lt;/iframe>
+
+*/
+
+print($('#test-1').clean().html());
+/* =>
+
+        &lt;a href="http://google.com">google link&lt;/a>
+        &lt;a>JS link&lt;/a>
+        red text
+
+*/
+
+    </pre>
+
+    <h2>Source data</h2>
+
+    <div id="test-content" style="border: 1px solid #00">
+      <div id="test-1">
+        <a href="http://google.com">google link</a>
+        <a href="javascript:alert('hey')">JS link</a>
+        <span style="color: #f00">red text</span>
+        <iframe src="about:blank">inner content</iframe>
+      </div>
+    </div>
+
+  </body>
+</html>

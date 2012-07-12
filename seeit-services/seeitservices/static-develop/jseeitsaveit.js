@@ -148,6 +148,7 @@ jQuery.fn.clean = function (options) {
   var badAttrs = makeSet(options.badAttrs);
   var goodAttrs = makeSet(options.goodAttrs);
   var attrCheck = options.attrCheck;
+  var linkAttrs = this.cleanOptions.linkAttrs;
 
   function cleanAttrs(el) {
     if (! (badAttrs || goodAttrs || attrCheck)) {
@@ -160,7 +161,8 @@ jQuery.fn.clean = function (options) {
     }
     var toRemove = [];
     for (var i=0; i<length; i++) {
-      var name = attrs[i].name;
+      var name = attrs[i].name.toUpperCase();
+      console.log('check attr', name);
       if (badAttrs && badAttrs[name]) {
         toRemove.push(name);
         continue;
@@ -172,6 +174,13 @@ jQuery.fn.clean = function (options) {
       if (attrCheck && (! attrCheck(name, attrs[i].nodeValue))) {
         toRemove.push(name);
         continue;
+      }
+      if (linkAttrs[name]) {
+        var value = el[name.toLowerCase()];
+        // FIXME: not a thorough check:
+        if (value.toLowerCase().indexOf('javascript:') != -1) {
+          toRemove.push(name);
+        }
       }
     }
     length = toRemove.length;
@@ -333,7 +342,14 @@ jQuery.cleanOptions = jQuery.fn.cleanOptions = {
       // VIDEO attrs:
       'MUTED', 'POSTER'
       ]
+  },
+
+  // FIXME: not sure if this is really all the attrs we need/want
+  linkAttrs: {
+    'HREF': true,
+    'SRC': true
   }
+
 };
 
 jQuery.makeUUID = jQuery.fn.makeUUID = function () {
