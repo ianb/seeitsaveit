@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>General Storage</title>
+  <link href="/develop/bootstrap/css/bootstrap.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 60px;
+    }
+    section {
+      padding-top: 60px;
+    }
+
+    ul#items {
+      padding: 0;
+    }
+
+    ul#items li {
+      list-style: none;
+      margin-bottom: 1em;
+      padding: 0.3em;
+      border: 1px solid #999;
+    }
+
+    .summary {
+      color: #666;
+    }
+
+  </style>
+ </head>
+ <body>
+
+<div class="navbar navbar-fixed-top">
+ <div class="navbar-inner">
+  <div class="container">
+    <a href="/" class="brand">General Storage</a>
+    <!--
+    <ul class="nav nav-tabs">
+     <li><a href="https://github.com/ianb/seeitsaveit">Github</a></li>
+     <li class="dropdown" id="manifesto-menu">
+      <a class="dropdown-toggle" data-toggle="dropdown" href="#manifesto-menu">Manifesto
+       <b class="caret"></b></a>
+      <ul class="dropdown-menu">
+       <li><a href="#manifesto">A Manifesto</a></li>
+       <li><a href="#why">Why?</a></li>
+       <li><a href="#adhoc">Why Ad Hoc?</a></li>
+       <li><a href="#modularity">Modularity</a></li>
+      </ul>
+     </li>
+     <li><a href="#development">Development</a></li>
+    </ul>-->
+    <ul class="nav pull-right">
+      <li><a href="#" id="login">-</a></li>
+    </ul>
+  </div> <!-- .container -->
+ </div> <!-- .navbar-inner -->
+</div> <!-- .navbar -->
+
+<div class="container">
+
+<ul id="items">
+</ul>
+
+</div> <!-- .container -->
+
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script src="/develop/jseeitsaveit.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.3.3/underscore-min.js"></script>
+  <script src="/develop/bootstrap/js/bootstrap.js"></script>
+  <script src="generalstorage.js"></script>
+
+<script type="text/template" id="status">
+  <% if (item.profilePic) { %>
+    <% if (item.profileLink) { %>
+      <a href="<%- item.profileLink %>">
+    <% } %>
+    <img src="<%- item.profilePic %>">
+    <% if (item.profileLink) { %>
+      </a>
+    <% } %>
+  <% } %>
+  <% if (item.profileLink) { %>
+    <a href="<%- item.profileLink %>"><%- item.name || 'User' %></a>
+  <% } else { %>
+    <%- item.name || 'User' %>
+  <% } %>
+  <% if (item.date) { %>
+    at <%- item.date %>
+  <% } %>
+  <%= item.body %>
+  <% if (item.attachments) { %>
+    <% item.attachments.forEach(function (a) { %>
+      <div class="attachment">
+        <% if (a.link) { %>
+          <h3><a href="<%- a.link %>"><%- a.title %></a></h3>
+        <% } else { %>
+          <h3><%- a.title %></h3>
+        <% } %>
+        <% if (a.image) { %>
+          <img src="<%- a.image %>">
+        <% } %>
+        <% if (a.summary) { %>
+          <div class="summary">
+            <%= a.summary %>
+          </div>
+        <% } %>
+      </div>
+    <% }); %>
+  <% } %>
+</script>
+
+<script type="text/template" id="song">
+  <%- item.title %> by <%- item.artist %>
+  <% if (item.album) { %>
+    in <%- item.album %>
+  <% } %>
+</script>
+
+<script type="text/template" id="unknown">
+  Data: <pre><%- JSON.stringify(item, null, '  ') %></pre>
+</script>
+
+<script type="text/template" id="general-item">
+  <li><%= detail %>
+    (<a href="<%- item.location %>">from</a>, <a href="#" data-id="<%- item.id %>" class="remove">remove</a>)
+    <code><%- JSON.stringify(item) %></code>
+  </li>
+</script>
+
+
+ </body>
+</html>
