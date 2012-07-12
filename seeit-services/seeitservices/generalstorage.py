@@ -42,9 +42,10 @@ class GeneralStorage(object):
                 if item.get('id') == id:
                     data['items'].remove(item)
                     break
+                self.data = data
             else:
                 return Response(status=400, content_type='text/plain',
                                 body='No item found with id %r' % id)
             return Response(status=200, body='')
         else:
-            return Response(json=data)
+            return Response(json=data, cache_expires=True)

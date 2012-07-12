@@ -34,7 +34,7 @@ $(function () {
       url: './data?id=' + encodeURIComponent(id),
       type: 'DELETE',
       success: function (resp) {
-        el.remove();
+        $('#item-' + id).remove();
       },
       error: function (req, status, thrown) {
         console.log('Error in remove:', status);
