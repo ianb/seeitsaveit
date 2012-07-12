@@ -13,7 +13,6 @@ self.port.on("StartExtraction", function (functionName, timeout) {
   try {
     var staticResult = func(resultReceived, logger);
   } catch (e) {
-    // FIXME: separate out error results
     self.port.emit("ErrorResult", e + "", e.stack);
     return;
   }
