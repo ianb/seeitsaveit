@@ -132,9 +132,12 @@
 </script>
 
 <script type="text/template" id="general-item">
-  <li id="item-<%- item.id %>"><%= detail %>
-    (<a href="<%- item.location %>">from</a>, <a href="#" data-id="<%- item.id %>" class="remove">remove</a>)
-    <code><%- JSON.stringify(item) %></code>
+  <li class="item" id="item-<%- item.id %>"><%= detail %>
+    <div class="controls">[<a href="<%- item.location %>">from</a> |
+      <a href="#" data-id="<%- item.id %>" class="remove">remove</a> |
+      <a href="#" class="showhide">json</a>]
+    </div>
+    <code class="json" style="display: none"><%- JSON.stringify(item) %></code>
   </li>
 </script>
 

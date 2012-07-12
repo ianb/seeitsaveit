@@ -19,6 +19,7 @@ if (typeof Auth != "undefined") {
 }
 
 $(function () {
+
   $('#login').click(function () {
     if (Auth.email) {
       Auth.logout();
@@ -42,6 +43,12 @@ $(function () {
     });
     return false;
   });
+
+  $('.showhide').live('click', function () {
+    $(this).parent('li.item').find('.json').toggle();
+    return false;
+  });
+
 });
 
 function startFetch() {
