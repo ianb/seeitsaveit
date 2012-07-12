@@ -146,8 +146,10 @@ function executeScript() {
     return;
   }
   setDocument(null, s);
+  var metadata = parseMetadata($('#script').val());
+  var data = {functionName: metadata[0]['function']};
   iframeLoad(function () {
-    iwindow().postMessage("scrape", "*");
+    iwindow().postMessage("scrape:" + JSON.stringify(data), "*");
   });
 }
 
@@ -396,12 +398,16 @@ function scriptURL(domain) {
       domain += '_' + metadata.type;
     }
   }
+  if (domain.indexOf('.') == 0) {
+    domain = 'wildcard' + domain;
+  }
   return location.protocol + '//' + location.host + '/develop/api/scripts/' +
     encodeURIComponent(Auth.email) + '/' + encodeURIComponent(domain) + '.js';
 }
 
 function saveClicked() {
   if (! Auth.email) {
+    Auth.request();
     return false;
   }
   $('#saver').text('Saving...').addClass('active');
@@ -414,6 +420,7 @@ function saveClicked() {
     dataType: 'text',
     success: function (resp, status, req) {
       $('#saver').removeClass('active');
+      $('#saver').attr('title', scriptURL());
       saveStatus.setSaved();
     },
     error: function (req, status, error) {

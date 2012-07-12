@@ -6,9 +6,13 @@ window.addEventListener("message", function (event) {
   console.log('iframe received data', event.data);
   // FIXME: do proper check here
   _CONTAINER = event.source;
-  if (event.data == "scrape") {
+  if (event.data.indexOf('scrape:') == 0) {
+    var data = JSON.parse(event.data.substr(('scrape:').length));
     highlight();
     _LOG = [];
+    runScraper(data.functionName, function (result) {
+      _CONTAINER.postMessage('scriptresult:' + JSON.stringify(result), '*');
+    });
     try {
       // FIXME: doesn't work with return value
       scrape(function (result) {
@@ -43,6 +47,53 @@ window.addEventListener("message", function (event) {
   }
 }, false);
 
+function runScraper(functionName, callback) {
+  var timeoutId = null;
+  logger.LOG = [];
+  var TIMEOUT = 5000;
+  function done(result) {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    if (result === null || typeof result != "object" || isArray(result)) {
+      result = {error: "function returned invalid result: " + JSON.stringify(result)};
+    }
+    if (logger.LOG.length) {
+      result.LOG = logger.LOG;
+      logger.LOG = [];
+    }
+    callback(result);
+  }
+  function error(msg) {
+    done({error: msg});
+  }
+
+  timeoutId = setTimeout(function () {
+    error('Script timed out after ' + TIMEOUT + ' milliseconds');
+  }, TIMEOUT);
+
+  if (! window[functionName]) {
+    error('No function ' + functionName + '() found');
+  }
+  try {
+    var result = window[functionName](done, logger);
+    if (result !== undefined) {
+      done(result);
+    }
+  } catch (e) {
+    var msg = 'Exception: ' + e;
+    if (e.stack) {
+      msg += '\n' + e.stack.replace(/data:.*:/, '<script>:');
+    }
+    error(msg);
+  }
+}
+
+function isArray(o) {
+  return (typeof o.length == "number" && o.forEach);
+}
+
 // Also found in scraper-runner.js:
 function logger() {
   if (arguments.length == 1) {
@@ -67,8 +118,10 @@ function logger() {
     }
   }
   console.log("Log: " + s);
-  _LOG.push(s);
+  logger.LOG.push(s);
 }
+
+logger.LOG = [];
 
 function clickEvent(event) {
   event.stopPropagation();
