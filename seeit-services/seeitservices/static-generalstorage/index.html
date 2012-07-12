@@ -118,6 +118,15 @@
   <% } %>
 </script>
 
+<script type="text/template" id="article">
+  <h3><%- item.title %></h3>
+  <% if (item.author) { %>by <%- item.author %> <% } %>
+  <% if (item.pubdate) { %>at <%- item.pubdate %> <% } %>
+  <div style="height: 7em; overflow-y: scroll; margin: 0.5em; border: 1px solid #006">
+    <%= item.contentHTML %>
+  </div>
+</script>
+
 <script type="text/template" id="unknown">
   Data: <pre><%- JSON.stringify(item, null, '  ') %></pre>
 </script>
