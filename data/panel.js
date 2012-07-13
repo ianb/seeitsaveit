@@ -46,7 +46,9 @@ self.port.on("Consumers", function (consumers, extractors) {
     el.appendChild(make('li', null, ['No consumers available']));
   }
   consumers.forEach(function (consumer) {
-    var button = make('button', {'type': 'button'},
+    var button = make(
+      'button',
+      {'type': 'button'},
       [(consumer.icon ? make('img', {src: consumer.icon}) : null),
        consumer.name || consumer.url]);
     button.addEventListener('click', function () {
@@ -54,7 +56,7 @@ self.port.on("Consumers", function (consumers, extractors) {
       self.port.emit("ConsumerChosen", consumer);
     }, false);
     var li = make('li', null, [button, ' ']);
-    var anchor = make('a', {href: '#'}, ['about']);
+    var anchor = make('a', {href: '#', draggable: "true", "data-consumer": JSON.stringify(consumer)}, ['++']);
     anchor.addEventListener('click', function () {
       detail.style.display = '';
       detail.innerHTML = 'Details:';
