@@ -7,7 +7,7 @@ site.addsitedir(os.path.join(here, 'vendor'))
 site.addsitedir(os.path.join(here, 'vendor-binary'))
 sys.path.insert(0, here)
 
-from seeitservices.wsgiapp import Application
+from seeitservices.wsgiapp import DispatcherApp
 
 app_instance = None
 
@@ -16,5 +16,5 @@ def application(environ, start_response):
     global app_instance
     if not app_instance:
         dir = '/tmp/seeitsaveit'
-        app_instance = Application(base=dir)
+        app_instance = DispatcherApp(base=dir)
     return app_instance(environ, start_response)

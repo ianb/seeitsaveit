@@ -95,6 +95,7 @@ class Application(object):
         if req.path_info_peek() == 'static':
             req.path_info_pop()
             return self.directory_app
+        return self.directory_app
         return exc.HTTPNotFound()
 
     ############################################################
