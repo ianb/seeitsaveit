@@ -1,9 +1,5 @@
 ## Addon
 
-* Reverse the order of everything!  All that matters to the user is who they want to send data to (with the possible addition that some services might have multiple facets; but we'll just think of those as multiple services, though a simple brand is not sufficient).  Then we simply need to find the "best" extractor given the kind of data that is implied by the consumer.  Potentially we could run multiple extractors and compare.
-
-* Let consumers accept postMessage, where a page is opened and the extracted data is sent via postMessage to that page.
-
 * Fix all FIXMEs
 
 * Create a way to handle pagination, so an extractor can get data from paginated results.  Maybe pagination will be a separate function, and the extractor will get multiple pages?  Or maybe the extractor can ask to do pagination.
@@ -12,15 +8,11 @@
 
   - An analog to pagination is spidering in general.
 
-* Make all data plural; singular data will just be a list with a single item.  Consumers must handle selection of a single item if they require that.
-
 * Clarify the extracted data format.  Allow more than one kind of data to be included in an extraction?  Add date to the format, maybe add a hash of the source page (after serialization), add presence of cookies.  (Note: use case for more than one data type: article and html-page)
 
 * Work to sandbox extractors more.  Create tests that try to break the sandboxing.
 
 * Allow images to be turned into `data:` URLs: https://gist.github.com/958841
-
-* Combine the selection of the extractor with the selection of the consumer
 
 * When Web Activities or Web Intents are ready, use them in lieu of the consumer selection (or use some private API to still combine the choice)
 
@@ -35,8 +27,6 @@
 * Allow dragging an extractor/consumer set to a separate button
 
 * Let the consumer open a new URL automatically when a POST submission comes in.
-
-* Add wildcards to the domain matchers
 
 * Do URL matching on the client (domain matching only on the server)
 
