@@ -14,8 +14,9 @@ var DEFAULT_SCRIPT = (
 '@type what-does-this-produce\n' +
 '*/\n' +
 '\n' +
-'function scrape(callback) {\n' +
-'  callback({ok: true});\n' +
+'function scrape(callback, log) {\n' +
+'  var item = {};\n' +
+'  return {data: [item]};\n' +
 '}\n'
 );
 
@@ -142,6 +143,15 @@ function executeScript() {
   try {
     esprima.parse(s);
   } catch (e) {
+    if (e.index) {
+      $('#script').focus();
+      var trailing = $('#script').val().substr(e.index);
+      var length = trailing.indexOf('\n', 1);
+      if (length == -1) {
+        length = trailing.length;
+      }
+      $('#script')[0].setSelectionRange(e.index, e.index+length);
+    }
     showResult({error: e+''});
     return;
   }
@@ -312,6 +322,8 @@ function onauthready() {
 }
 
 function checkServerScript() {
+  // FIXME: make this work
+  return;
   if (Auth.email && DOC) {
     $.ajax({
       url: scriptURL(),
