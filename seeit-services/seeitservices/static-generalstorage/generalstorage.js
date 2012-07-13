@@ -75,7 +75,7 @@ function startFetch() {
         console.log('rendered', item, 'result', result, tmpl);
         result = _.template(genTmpl, {item: item, detail: result});
         var el = $(result);
-        $('#items').append(el);
+        $('#items').prepend(el);
       }
     },
     error: function (xhr, status, thrown) {
