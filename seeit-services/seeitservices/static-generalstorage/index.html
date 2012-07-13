@@ -16,7 +16,7 @@
       padding: 0;
     }
 
-    ul#items li {
+    ul#items > li {
       list-style: none;
       margin-bottom: 1em;
       padding: 0.3em;
@@ -127,12 +127,37 @@
   </div>
 </script>
 
+<script type="text/template" id="product">
+  <table>
+    <tr>
+      <td width="30%">
+        <% if (item.image) { %>
+          <img style="height: 100%" src="<%- item.image %>">
+        <% } %>
+      </td>
+      <td width="70%" valign="top">
+  <h3><%- item.name %></h3>
+  <div>Price:
+    <% if (item.price.currency == "USD") { %>$<% } %><%- item.price.amount %>
+  </div>
+  <% if (item.rating) { %>
+    <div>Rating: <%- item.value %> out of <%- item.max %></div>
+  <% } %>
+  <div style="height: 7em; overflow-y: scroll; margin: 0.5em; border: 1px solid #006">
+    <%= item.descriptionHTML %>
+  </div>
+  <% if (item.inStock) { %><div>In Stock</div><% } %>
+
+  </td></tr></table>
+
+</script>
+
 <script type="text/template" id="unknown">
   Data: <pre><%- JSON.stringify(item, null, '  ') %></pre>
 </script>
 
 <script type="text/template" id="general-item">
-  <li class="item" id="item-<%- item.id %>"><%= detail %>
+  <li style="clear: both" class="item" id="item-<%- item.id %>"><%= detail %>
     <div class="controls">[<a href="<%- item.location %>">from</a> |
       <a href="#" data-id="<%- item.id %>" class="remove">remove</a> |
       <a href="#" class="showhide">json</a>]

@@ -2,5 +2,5 @@
   "name": "Simple storage for different kinds of data",
   "sendToPage": "./",
   "sendToPageFunction": "send",
-  "types": ["status", "song", "article"]
+  "types": ["status", "song", "article", "product"]
 }
