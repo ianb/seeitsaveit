@@ -24,10 +24,6 @@
 
 * Allow you to favorite an extractor or consumer
 
-* Allow dragging an extractor/consumer set to a separate button
-
-* Let the consumer open a new URL automatically when a POST submission comes in.
-
 * Do URL matching on the client (domain matching only on the server)
 
 * Consider validation of data types
@@ -39,6 +35,8 @@
 * Let consumer signal an error with the incoming data (report to repository?)
 
 * Make develop location configurable (separately)
+
+* Fix up how information is sent to develop; the IPC is fragile and unnecessarily sticky
 
 * Can panels be sticky?
 
@@ -74,8 +72,6 @@ Some data types I'd like to define more formally:
 
 * Create a read-later consumer
 
-* Create a annotation consumer
-
 * Create a music list consumer: accepts a list of music, lets user select which items they want, and assembles a list based on that
 
 * Shopping comparison
@@ -94,13 +90,7 @@ Some data types I'd like to define more formally:
 
 ## Develop
 
-* Add an HTML stripper to jseeitsaveit, to strip HTML down to its more semantic base (i.e., removing classes and the like).
-
-* Add HTML serialization (i.e., staticHTML) to jseeitsaveit.
-
 * Make @require work properly in development
-
-* Fix return values in extractor development
 
 * Allow user to browse their extractors
 
@@ -109,8 +99,6 @@ Some data types I'd like to define more formally:
 * Make the onclick element browser a little more visually appealing. Combine that with the selector browser?
 
 * Maybe use stacked collapsable items as a way of organizing the page
-
-* Use ACE for the editor
 
 * Allow extracted data to be sent right to a consumer, for full-stack test
 
