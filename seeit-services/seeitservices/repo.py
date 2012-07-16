@@ -210,6 +210,9 @@ class Application(object):
         transformers = self.transformers
         resp.write('Extractors:\n')
         for url in list(transformers):
+            if '0.0.0.0' in url:
+                del transformers[url]
+                continue
             try:
                 send_request(req, url)
             except send_request.Error:
@@ -220,6 +223,9 @@ class Application(object):
         consumers = self.consumers
         resp.write('Consumers:\n')
         for url in list(consumers):
+            if '0.0.0.0' in url:
+                del consumers[url]
+                continue
             try:
                 send_request(req, url)
             except send_request.Error:
