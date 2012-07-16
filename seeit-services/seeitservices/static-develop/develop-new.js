@@ -279,6 +279,8 @@ $(function () {
   session.setMode(new JavaScriptMode());
   session.setNewLineMode('unix');
   session.setUseWrapMode(true);
+  session.setUseSoftTabs(true);
+  session.setTabSize(2);
   $('#execute').click(function () {
     executeScript();
     return false;
