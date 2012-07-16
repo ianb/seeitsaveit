@@ -82,7 +82,14 @@ class Subber(object):
                     content = content.replace(old_content, new_content + old_content)
             dest_dir = os.path.dirname(dest_file_path)
             if not os.path.exists(dest_dir):
-                os.makedirs(dest_dir)
+                try:
+                    os.makedirs(dest_dir)
+                except OSError, e:
+                    if e.errno == 17:
+                        # File already exists
+                        pass
+                    else:
+                        raise
             with open(dest_file_path, 'wb') as fp:
                 fp.write(content)
         return FileApp(dest_file_path)
