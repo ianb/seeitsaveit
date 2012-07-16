@@ -63,13 +63,13 @@ function setDocument(doc, extraScript) {
   });
   if (doc.js) {
     console.log('getting JS from', doc.js);
-    if ($('#script').val() == DEFAULT_SCRIPT) {
+    if (getValue() == DEFAULT_SCRIPT) {
       $.ajax({
         url: doc.js,
         type: 'GET',
         dataType: 'text',
         success: function (resp) {
-          $('#script').val(resp);
+          setValue(resp);
           saveStatus.setSaved();
         },
         error: function (req, status, error) {
@@ -77,8 +77,8 @@ function setDocument(doc, extraScript) {
         }
       });
     }
-  } else if ($('#script').val() == DEFAULT_SCRIPT) {
-    $('#script').val(renderDefaultScript());
+  } else if (getValue() == DEFAULT_SCRIPT) {
+    setValue(renderDefaultScript());
     saveStatus.setSaved();
   }
   if (! extraScript) {
@@ -139,24 +139,29 @@ function encodeData(content_type, data) {
 }
 
 function executeScript() {
-  var s = $('#script').val();
+  var s = getValue();
   try {
     esprima.parse(s);
   } catch (e) {
     if (e.index) {
-      $('#script').focus();
+      editor.focus();
+      //var selection = new Selection(editor.getSession());
+      //editor.moveCursorTo(e.row, e.column, true);
+      //editor.centerSelection();
+      /*$('#script').focus();
       var trailing = $('#script').val().substr(e.index);
       var length = trailing.indexOf('\n', 1);
       if (length == -1) {
         length = trailing.length;
       }
       $('#script')[0].setSelectionRange(e.index, e.index+length);
+      */
     }
     showResult({error: e+''});
     return;
   }
   setDocument(null, s);
-  var metadata = parseMetadata($('#script').val());
+  var metadata = parseMetadata(getValue());
   var data = {functionName: metadata[0]['function']};
   iframeLoad(function () {
     iwindow().postMessage("scrape:" + JSON.stringify(data), "*");
@@ -255,7 +260,25 @@ function showSelector(data) {
   showPreview();
 }
 
+var editor = null;
+
+function setValue(value) {
+  editor.getSession().setValue(value);
+}
+
+function getValue() {
+  return editor.getSession().getValue();
+}
+
 $(function () {
+  var filler = $('#script-filler');
+  $('#script').css(filler.position()).width(filler.width()).height(filler.height());
+  editor = ace.edit('script');
+  var session = editor.getSession();
+  var JavaScriptMode = require("ace/mode/javascript").Mode;
+  session.setMode(new JavaScriptMode());
+  session.setNewLineMode('unix');
+  session.setUseWrapMode(true);
   $('#execute').click(function () {
     executeScript();
     return false;
@@ -278,11 +301,15 @@ $(function () {
   $('#register').bind('click', registerClicked);
   $('#load-keep').click(loadKeepClicked);
   $('#load-overwrite').click(loadOverwriteClicked);
-  if (! $('#script').val()) {
-    $('#script').val(DEFAULT_SCRIPT);
+  if (! getValue()) {
+    setValue(DEFAULT_SCRIPT);
     saveStatus.setSaved();
   }
-  $('#script').keyup(function () {
+  /*$('#script').keyup(function () {
+    saveStatus.checkSaved();
+  });*/
+  editor.on('onTextInput', function () {
+    console.log('got a change');
     saveStatus.checkSaved();
   });
 });
@@ -292,7 +319,7 @@ var saveStatus = {
   savedText: null,
   setSaved: function () {
     this.showingSaved = true;
-    this.savedText = $('#script').val();
+    this.savedText = getValue();
     $('#saver').text('Saved');
   },
   checkSaved: function () {
@@ -300,7 +327,8 @@ var saveStatus = {
       $('#saver').text('Login to save');
       return;
     }
-    if (this.showingSaved && this.savedText != $('#script').val()) {
+    console.log('checking saved', this.savedText, getValue());
+    if (this.showingSaved && this.savedText != getValue()) {
       this.showingSaved = false;
       $('#saver').text('Save');
     }
@@ -330,11 +358,11 @@ function checkServerScript() {
       type: "GET",
       dataType: 'text',
       success: function (resp, status, req) {
-        if ($('#script').val() == DEFAULT_SCRIPT
-            || $('#script').val() == renderDefaultScript()) {
-          $('#script').val(resp);
+        if (getValue() == DEFAULT_SCRIPT
+            || getValue() == renderDefaultScript()) {
+          setValue(resp);
           saveStatus.setSaved();
-        } else if (resp != $('#script').val()) {
+        } else if (resp != getValue()) {
           $('#load-domain').text(DOC.domain);
           $('#load-data').text(resp);
           $('#load-question').modal();
@@ -354,7 +382,7 @@ function loadKeepClicked() {
 }
 
 function loadOverwriteClicked() {
-  $('#script').val($('#load-data').text());
+  setValue($('#load-data').text());
   $('#load-question').modal('hide');
   saveStatus.setSaved();
 }
@@ -397,7 +425,7 @@ function scriptURL(domain) {
   var metadata = {};
   if (! domain) {
     try {
-      metadata = parseMetadata($('#script').val())[0];
+      metadata = parseMetadata(getValue())[0];
       domain = metadata.domain;
     } catch (e) {
       console.log('Error in metadata:', e);
@@ -426,7 +454,7 @@ function saveClicked() {
   $.ajax({
     type: 'PUT',
     url: scriptURL(),
-    data: $('#script').val(),
+    data: getValue(),
     processData: false,
     contentType: 'text/plain',
     dataType: 'text',
@@ -566,7 +594,12 @@ function inspectElement(element) {
 
 window.addEventListener("message", function (event) {
   var data = event.data;
-  if (event.origin == 'https://browserid.org') {
+  if (event.origin == 'https://browserid.org'
+      || event.origin == 'https://login.persona.org') {
+    return;
+  }
+  if (event.data.indexOf('zero-timeout-message') === 0) {
+    // ACE emits these
     return;
   }
   console.log('got message', data.substr(0, 80), event.origin);

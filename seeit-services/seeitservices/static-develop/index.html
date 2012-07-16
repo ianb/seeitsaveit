@@ -8,6 +8,19 @@
 body {
   padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
 }
+code {
+  color: #004;
+  font-size: 90%;
+}
+#script {
+  position: absolute;
+  width: 20em;
+  height: 10em;
+}
+#script-filler {
+  width: 100%;
+  height: 10em;
+}
 
   </style>
   <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
@@ -41,7 +54,9 @@ body {
 <div class="row">
  <div class="span6" style="padding: 0.3em">
   Script: <span id="url"></span><br>
-  <textarea id="script" style="width: 100%; height: 10em"></textarea>
+  <!--<textarea id="script" style="width: 100%; height: 10em"></textarea>-->
+  <div id="script"></div>
+  <div id="script-filler"></div>
   <div id="button-set">
    <button id="execute" class="btn" type="button">Execute!</button>
   </div>
@@ -86,6 +101,8 @@ body {
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="ace/build/src/ace.js"></script>
+<script src="ace/build/src/mode-javascript.js"></script>
 <script src="bootstrap/js/bootstrap.js"></script>
 <script src="esprima/esprima.js"></script>
 <script src="develop-new.js"></script>

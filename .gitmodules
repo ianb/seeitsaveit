@@ -13,3 +13,6 @@
 [submodule "seeit-services/seeitservices/static-develop/doctestjs"]
 	path = seeit-services/seeitservices/static-develop/doctestjs
 	url = git@github.com:ianb/doctestjs.git
+[submodule "seeit-services/seeitservices/static-develop/ace"]
+	path = seeit-services/seeitservices/static-develop/ace
+	url = git://github.com/ajaxorg/ace.git
