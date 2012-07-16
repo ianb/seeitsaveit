@@ -1,0 +1,55 @@
+<ol>
+
+  <li>Click on an element in the document to see information about that element.</li>
+
+  <li>It will show the element, and its classes, like <code>DIV.class1.class2</code>.</li>
+
+  <li>It will also show each parent and some children.  Click on one
+  of the parents to see that element highlighted in the
+  document. </li>
+
+  <li><code>$('.selector')</code> is the core of all scraping.</li>
+
+  <li>If the element you want to get doesn't have a good class or id
+  on it, look for a parent element that does.  </li>
+
+  <li>Once you find a container, you can
+  use <code>.find(selector)</code> to find children of that element
+  that match a selector.</li>
+
+  <li>If you want the text content of an element,
+  us <code>el.strip()</code> which gets the text of the element, but
+  with whitespace stripped and normalized.</li>
+
+  <li><code>.strip()</codE> is one of a few extensions
+  that <a href="https://github.com/ianb/seeitsaveit/blob/master/seeit-services/seeitservices/static-develop/jseeitsaveit.js">jseeitsaveit.js</a>
+  adds to jquery.</li>
+
+  <li><code>el.link()</code> gets the <code>href</code>
+  or <code>src</code> attribute of an element, resolved.</li>
+
+  <li>Another common need is to select a bunch of container elements,
+  and product a list of items from those elements.  You can do it like
+  this:
+
+<pre>
+var els = $('li.item');
+var items = els.collect(function (el) {
+  item = {};
+  if (! el.find('.required-subitem').length) {
+    // Skips this item
+    return;
+  }
+  item.url = el.find('a').link();
+  return item;
+});
+</pre>
+
+It's kind of a map pattern.  You might want
+to <code>$.reverse(items)</code> if the order is backwards.
+</li>
+
+  <li><code>el.clean()</code> returns cleaned-up HTML, removing any
+  inline styles or other suspicious content. </li>
+
+</ol>

@@ -312,7 +312,21 @@ $(function () {
     console.log('got a change');
     saveStatus.checkSaved();
   });
+  $('#help').click(function () {
+    helpClicked();
+  });
 });
+
+function helpClicked() {
+  $.ajax({
+    url: './help.html',
+    success: function (resp) {
+      var el = $('#help-modal');
+      el.find('.modal-body').html(resp);
+      el.modal();
+    }
+  });
+}
 
 var saveStatus = {
   showingSaved: false,
