@@ -28,7 +28,7 @@ $(function () {
     }
   });
 
-  $('.remove').live('click', function () {
+  $(document).on('click', '.remove', function () {
     var el = $(this);
     var id = el.attr('data-id');
     $.ajax({
@@ -44,8 +44,8 @@ $(function () {
     return false;
   });
 
-  $('.showhide').live('click', function () {
-    $(this).parent('li.item').find('.json').toggle();
+  $(document).on('click', '.showhide', function () {
+    $(this).closest('li.item').find('.json').toggle();
     return false;
   });
 
@@ -58,7 +58,6 @@ function startFetch() {
     type: 'GET',
     dataType: 'json',
     success: function (resp) {
-      console.log('starting render');
       for (var i=0; i<resp.items.length; i++) {
         var item = resp.items[i];
         if (presentObjects.has(item)) {
@@ -66,13 +65,10 @@ function startFetch() {
         }
         presentObjects.add(item);
         var tmpl = $('script#' + item.type).text();
-        console.log('got tmpl', tmpl);
         if (! tmpl) {
           tmpl = $('script#unknown').text();
         }
-        console.warn('SOURCE', _.template(tmpl).source);
         var result = _.template(tmpl, {item: item});
-        console.log('rendered', item, 'result', result, tmpl);
         result = _.template(genTmpl, {item: item, detail: result});
         var el = $(result);
         $('#items').prepend(el);

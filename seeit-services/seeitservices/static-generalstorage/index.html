@@ -141,7 +141,7 @@
     <% if (item.price.currency == "USD") { %>$<% } %><%- item.price.amount %>
   </div>
   <% if (item.rating) { %>
-    <div>Rating: <%- item.value %> out of <%- item.max %></div>
+    <div>Rating: <%- item.rating.value %> out of <%- item.rating.max %></div>
   <% } %>
   <div style="height: 7em; overflow-y: scroll; margin: 0.5em; border: 1px solid #006">
     <%= item.descriptionHTML %>
@@ -162,7 +162,7 @@
       <a href="#" data-id="<%- item.id %>" class="remove">remove</a> |
       <a href="#" class="showhide">json</a>]
     </div>
-    <code class="json" style="display: none"><%- JSON.stringify(item) %></code>
+    <pre class="json" style="display: none"><%- JSON.stringify(item, null, '  ') %></pre>
   </li>
 </script>
 
