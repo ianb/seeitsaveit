@@ -1,0 +1,6 @@
+{
+  "name": "Read Later",
+  "sendToPage": "./",
+  "sendToPageFunction": "send",
+  "types": ["article"]
+}

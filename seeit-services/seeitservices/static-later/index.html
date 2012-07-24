@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>Later</title>
+  <link href="/develop/bootstrap/css/bootstrap.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 60px;
+    }
+    section {
+      padding-top: 60px;
+    }
+
+    ul#articles {
+      padding: 0;
+    }
+
+    ul#articles > li {
+      list-style: none;
+      margin-bottom: 1em;
+      padding: 0.3em;
+      border: 1px solid #999;
+    }
+
+    .summary {
+      color: #666;
+    }
+
+    .article {
+      border: 2px solid #999;
+    }
+
+  </style>
+ </head>
+ <body>
+
+<div class="navbar navbar-fixed-top">
+ <div class="navbar-inner">
+  <div class="container">
+    <a href="/" class="brand">Later</a>
+    <!--
+    <ul class="nav nav-tabs">
+     <li><a href="https://github.com/ianb/seeitsaveit">Github</a></li>
+     <li class="dropdown" id="manifesto-menu">
+      <a class="dropdown-toggle" data-toggle="dropdown" href="#manifesto-menu">Manifesto
+       <b class="caret"></b></a>
+      <ul class="dropdown-menu">
+       <li><a href="#manifesto">A Manifesto</a></li>
+       <li><a href="#why">Why?</a></li>
+       <li><a href="#adhoc">Why Ad Hoc?</a></li>
+       <li><a href="#modularity">Modularity</a></li>
+      </ul>
+     </li>
+     <li><a href="#development">Development</a></li>
+    </ul>-->
+    <ul class="nav pull-right">
+      <li><a href="#" id="login">-</a></li>
+    </ul>
+  </div> <!-- .container -->
+ </div> <!-- .navbar-inner -->
+</div> <!-- .navbar -->
+
+<div class="container">
+
+<ul id="articles">
+</ul>
+
+</div> <!-- .container -->
+
+<script id="article-template" type="text/template">
+  <div class="article" id="<%- id %>">
+    <h2><%- article.title %></h2>
+    <div class="controls">
+      <a class="remove" href="#">remove</a>
+    <div class="content">
+      <%= article.contentHTML %>
+    </div>
+  </div>
+</script>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <!--<script src="/develop/jseeitsaveit.js"></script>-->
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.3.3/underscore-min.js"></script>
+  <script src="/develop/bootstrap/js/bootstrap.js"></script>
+  <script src="later.js"></script>
+
+ </body>
+</html>
