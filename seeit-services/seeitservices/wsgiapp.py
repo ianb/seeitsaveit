@@ -23,6 +23,9 @@ class DispatcherApp(object):
         ## Hack for Petri
         if req.headers.get('X-SSL', '').lower() == 'on':
             req.scheme = 'https'
+        ## Another hack for Petri (https://bugzilla.mozilla.org/show_bug.cgi?id=807796)
+        if 'wsgi.file_wrapper' in req.environ:
+            del req.environ['wsgi.file_wrapper']
         self.set_auth(req)
         req.root = (req.application_url, self)
         if req.path_info == '/auth':
