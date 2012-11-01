@@ -26,6 +26,17 @@ code {
   height: 1.5em;
   overflow: hidden;
 }
+#selector-form .control-label {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  width: 100px;
+}
+#selector-form .control-group {
+  margin-bottom: 4px;
+}
+#selector-form .controls {
+  margin-left: 120px;
+}
 
   </style>
   <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
@@ -72,13 +83,20 @@ code {
    <pre id="script-output"></pre>
   </div>
 
-  <div class="form-inline">
-   <label for="selectors">Classes:</label> <select id="selectors"></select>
-  </div>
-
-  <div>
-   <input type="text" id="showselector" class="input-large"><br>
-  </div>
+  <form class="form-horizontal" id="selector-form">
+    <div class="control-group">
+      <label class="control-label" for="selectors">Classes:</label>
+      <div class="controls">
+        <select id="selectors"></select>
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="showselector">Selector:</label>
+      <div class="controls">
+        <input type="text" id="showselector" class="input-large">
+      </div>
+    </div>
+  </form>
 
   <div id="aboutselector"></div>
 

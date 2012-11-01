@@ -210,9 +210,6 @@ function showSelector(data) {
     div.append($('<span></span>').text(data.error));
     return;
   }
-  div.append($('<span>Count: </span>')).append(
-    $('<span id="aboutcount"></span>').text(data.count)).append(
-    $('<br>'));
   if (data.subclasses && data.subclasses.length) {
     data.subclasses.sort(function (a, b) {return -cmp(a.count, b.count) || cmp(a.name, b.name);});
     div.append($('<span>Subclasses:</span>'));
