@@ -40,27 +40,204 @@
 
 <div class="container">
 
-<div> SeeItSaveIt is an Addon for Firefox that extracts structured
+<section id="intro">
+
+<p> SeeItSaveIt is an Addon for Firefox that extracts structured
 information from web pages, and sends it to services that can use that
 data.  It does this using ad hoc, user-contributed scripts.  </div>
 
-<div> To get started <a class="btn btn-primary"
-href="/static/seeitsaveit.xpi">install the Addon</a></div>
+<h1>Wait, what?</h1>
+
+<p> Let's say you are looking at a website, and you see
+some <em>data</em> you'd like to use.  What kind of data?  Maybe it's
+an item that you can purchase: the page will tell you the name and
+description of the item, its price, maybe some shipping information.
+If you are doing comparison pricing you might want to compare that
+side-by-side with product information from another page.
+The <em>structured data</em> here would be fields for price and name
+and so on.</p>
+
+<p> Another example might be a social network like Facebook.  You have
+access to a lot of data, like your list of contacts, people's posts,
+image galleries you've uploaded, etc.  <em>Some</em> of this data can
+be extracted through private APIs on the social network,
+but <em>all</em> of the data is available to you: if you can see the
+information, it's almost certainly possible to extract it in a
+structured form.  SeeItSaveIt helps you get that structured
+information.</p>
+
+<p> <strong>What then?</strong>  Having "structured data" probably
+doesn't mean much to you; even for a computer programmer this is a
+very vague statement.  You almost certainly want to <em>do</em>
+something with the data (and if you don't have anything to do with the
+data, you probably wouldn't care about it in the first place).</p>
+
+<p> SeeItSaveIt gives that data to a service that you want to use, and
+that knows how to use the data you have.  A service that aggregates
+your contact data might accept data extracted from Facebook, LinkedIn,
+your email, or your intranet.  A product comparison tool could accept
+data from thousands of sites (but probably not Facebook). </p>
+
+<h1>How to get started?</h1>
+
+<p> <strong>Warning:</strong> SeeItSaveIt is currently an experimental
+product.  It may not protect your privacy as much as we want it to,
+and it may not work as reliably as we would like.  Also, at this time,
+the process of finding a service to send data to is crude and perhaps
+unhelpful. </p>
+
+<p> SeeItSaveIt is an Addon for Firefox.  To get started you need to
+install it in your browser (this does not require a restart): </p>
+
+<p> <a class="btn btn-primary"
+href="/static/seeitsaveit.xpi">Install the Addon</a></p>
+
+<p> SeeItSaveIt won't <em>do</em> anything once installed, but it will
+add a new button in the bottom right of your browser, like this:
+  <img style="height: 1em; padding: 0 0.3em 0 0.3em" src="static/box-download-screenshot.png">
+  </p>
+
+<p> If you don't see that you might need to display the <strong>Add-on
+bar</strong>, you can do this with <strong>View &gt; Toolbars &gt;
+Add-on bar</strong>
+(<a href="http://support.mozilla.org/en-US/kb/add-on-bar-quick-access-to-add-ons">read
+more here</a>).</p>
+
+</section>
+
+<section id="how">
+
+<h1>How does this work?</h1>
+
+<p>What follows will be a technical discussion of what SeeItSaveIt
+does.  In <a href="#manifest">the manifesto</a> is a description
+of <em>why</em>.</p>
+
+<h2>Crowdsourcing parsing</h2>
+
+<p> Commonly attempts to get structured data see this as a supply side
+issue: first we must convince data providers to structure their data.
+SeeItSaveIt instead seeks to build <em>and satisfy</em> demand. </p>
+
+<p> In order to do this SeeItSaveIt tries to parse and understand data
+wherever it exists, without asking the data provider to change
+anything.  But to do this we need data extraction scripts for each of
+these data providers. </p>
+
+<p> With this in mind, SeeItSaveIt asks the public (aka the crowd) to
+write these scripts.  Each script works for a specific website(s), and
+produces a certain kind of output &mdash; a certain structure of data,
+like <code>contacts</code> or a <code>article</code>.  There's just no
+generalized way to do this.  It may be possible to extract meaning
+statistically or with heuristics, but that is still a possibility with
+SeeItSaveIt &mdash; fallback scripts may use these measures. </p>
+
+<p> To make script development easier SeeItSaveIt includes a
+development site (available at a single click) to work on your
+extraction scripts.  Scripts typically weigh in at only a couple dozen
+lines.  Work like finding and parsing the page is handled either by
+SeeItSaveIt or by the user themself, making the script writing fairly
+easy.  In the future we hope to include features to make it easy to
+report failed extraction. </p>
+
+<h2>Creating read-only versions of pages</h2>
+
+<p> Running scripts from random people isn't safe or pleasant, but
+SeeItSaveIt has a firewall between these scripts and the page itself.
+Only the visible parts of a page are serialized, and then this simpler
+version of the page is passed to the script.  This generally removes
+data like cookies or information that might be in scripts; it also
+means the script cannot do anything that would change the page or
+effect your browsing session &mdash; in other words, the script can't
+pretend to be you. </p>
+
+<p> Things like Add-ons, bookmarklets and Greasemonkey scripts (and
+even sometimes API access) doesn't necessarily guarantee this.  This
+makes it harder to scale up participation &mdash; these systems are
+legitimate in large part to the degree they are obscure. </p>
+
+<p> In progress is also enough sandboxing so that the scripts can get
+a page coming in, and data going out <em>into the user's control</em>,
+without risk of information leaking.  Because this isn't done there
+are still privacy risks with using SeeItSaveIt. </p>
+
+<h2>Two-phase extraction and delivery of data</h2>
+
+<p> Data is first extracted from the page by a script, then SeeItSave
+delivers that parsed data to some consuming site or application.
+Separating this into two phases has some advantages:
+
+  <ol>
+    <li>The extraction script can be heavily sandboxed.</li>
+
+    <li>There are multiplicative benefits of extraction scripts and
+    consuming sites.  Once there are scripts to extract a certain kind
+    of data from quite a few scripts, any new consuming site can enter
+    and get that benefit. </li>
+
+    <li>There is less business collusion between these two components.
+    Many services are uncomfortable or even aggressive when a
+    competitor tries to get data out of one of their systems.
+    Previously amenable relationships can sour as business units
+    expand or join.  Because the extractor script is not a business,
+    the two sites are kept at arms length, joined only
+    by <em>user</em> action.</li>
+
+    <li>Scripts can be repurposed.  The extraction scripts aren't
+    particularly specific to SeeItSaveIt, and so other experiments or
+    projects may find them useful.</li>
+
+  </ol>
+
+</p>
+
+<h2>Future: Web Activities/Intents</h2>
+
+<p> Currently one of the least functional pieces of SeeItSaveIt is
+choosing a site to send your data to.  There is simply a global list
+of consuming sites.  This is no good! </p>
+
+<p> Unlike extraction, it is assumed that sites will be willing to go
+out of their way to <em>accept</em> data.  Everyone likes more data!
+So we do not expect to have ad hoc ways of inputing data.  (But I
+would expect a site that, for instance, converted extracted data into
+an Excel or CSV file that you could download.) </p>
+
+<p> Still, what sites does a user use, and is interestedd in?  And
+what kinds of data are those sites interested in?  There are a pair of
+related up-and-coming protocols for handling just this kind of
+situation: <a href="https://wiki.mozilla.org/WebAPI/WebActivities">Web
+Activities</a>, used by Mozilla for
+its <a href="http://www.mozilla.org/en-US/firefoxos/">Firefox OS</a>
+project.  <a href="http://en.wikipedia.org/wiki/Web_Intents">Web
+Intents</a> is a more standards-oriented proposal, led by Google and
+being implemented in Chrome. </p>
+
+<p> In both systems a web site can request to register its ability to
+handle certain kinds of Intents or Activities.  These Intents are
+typed much like the structured data that SeeItSaveIt outputs.  When
+another site "starts an intent" (or activity) the browser looks at all
+the sites that have registered the ability to handle the intent and
+passes it on to that site. </p>
+
+<p> In many ways SeeItSaveIt is the ability to extract an Intent from
+any webpage without its cooperation.  As such it should be a good
+match.  However the technology is still in progress, so we wait.  Or
+perhaps we create a dumb simplified version of the same thing as a
+stop-gap. </p>
+
+</section>
 
 <section id="manifesto">
 
 <h1>A Manifesto</h1>
 
-<div>
-
-  I want to tell you why I think this project is important.  If you
-  are thinking "should I try this out" then this is probably a much
-  more long-winded and abstract discussion than would make sense.  But
-  if you are asking "is this important" or "is this the right
-  approach" I hope my arguments will help you make those
-  determinations.
-
-</div>
+<p> I want to tell you why I think this project is <em>important</em>.
+If you are thinking "should I try this out" then this is probably a
+much more long-winded and abstract discussion than would make sense.
+But if you are asking "is this important" or "is this the right
+approach" I hope my arguments will help you make those determinations.
+</p>
 
 </section>
 
@@ -68,79 +245,61 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
 
 <h2>Why?</h2>
 
-<div>
+<p> Have you heard the refrain <em>users should own their own
+data</em>?  Unfortunately this advocacy takes the form of begging:
+begging services to open up data, begging users to care in enough
+numbers to make that happen and to exercise those options in ways that
+will make them protect and force maintenance of that open data in the
+future.
+</p>
 
-  Have you heard the refrain <em>users should own their own data</em>?
-  Unfortunately this advocacy takes the form of begging: begging
-  services to open up data, begging users to care in enough numbers to
-  make that happen and to exercise those options in ways that will
-  make them protect and force maintenance of that open data in the
-  future.
+<p> But we don't need to be beggars for this data.  The data
+is <em>already there</em> &mdash; everything you can see in your
+browser is data that can be read, extracted, and understood.  It's not
+always easy to extract this data, but it's possible, and usually it's
+not very hard; it requires some expertise but the results of that
+expertise can be shared with everyone.
+</p>
 
-</div>
+<p> Of course we already extract data regularly from our web browsing.
+The URL is the easiest piece of data to pass around, and we pass this
+location identifier around so other people can see what we can see.
+But things at a URL can change &mdash; pages disappear, are edited,
+represent streams of updates that are always changing, are customized
+for individual users, are only available to subscribers or inside
+private networks.  Sometimes a URL is exactly the right thing to
+share, or the right thing to save with a bookmark; but often it's not
+the <em>address</em> that we want to work with, it's the <em>actual
+data we see on the screen</em>.
+</p>
 
-<div>
+<p> Web sites can protect and change the pages at any one URL, but
+when you <em>see something</em> on the screen, that data is in your
+hands, it is literally located on your computer.  <strong>It's your
+data &mdash; if you are willing to take hold of it!</strong>
+</p>
 
-  But we don't need to be beggars for this data.  The data
-  is <em>already there</em> &mdash; everything you can see in your
-  browser is data that can be read, extracted, and understood.  It's
-  not always easy to extract this data, but it's possible, and usually
-  it's not very hard; it requires some expertise but that expertise
-  can be shared with everyone.
+<p> <i>SeeItSaveIt</i> lets you take hold of that data.  It extracts
+structured information.  So while you might see article text, user
+names, contact information, etc. on your screen, the meaning of each
+piece of text is not clear to the computer, or to any other services
+on the web.  And the data isn't nearly as useful if the computer can't
+understand it.  You want to throw away the useless information &mdash;
+ads, hints about how to use the site, branding, etc.  You want to mark
+that data according to what it is.  Once you have that, there's
+unlimited ways of using that information.
+</p>
 
-</div>
-
-<div>
-
-  Of course we already extract data regularly from our web browsing.
-  The URL is the easiest piece of data to pass around, and we pass
-  this location identifier around so other people can see what we can
-  see.  But things at a URL can change &mdash; pages disappear, are
-  edited, represent streams of updates that are always changing, are
-  customized for individual users, are only available to subscribers
-  or inside private networks.  Sometimes a URL is exactly the right
-  thing to share, or the right thing to save with a bookmark; but
-  often it's not the <em>address</em> that we want to work with, it's
-  the <em>actual data we see on the screen</em>.
-
-</div>
-
-<div>
-
-  Web sites can protect and change the pages at any one URL, but when
-  you <em>see something</em> on the screen, that data is in your
-  hands, it is literally located on your computer.  <strong>It's your
-  data &mdash; if you are willing to take hold of it!</strong>
-
-</div>
-
-<div>
-
-  <i>SeeItSaveIt</i> lets you take hold of that data.  It extracts
-  structured information.  So while you might see article text, user
-  names, contact information, etc. on your screen, the meaning of each
-  piece of text is not clear to the computer.  And the data isn't
-  nearly as useful if the computer can't understand it.  You want to
-  throw away the useless information &mdash; ads, hints about how to
-  use the site, branding, etc.  You want to mark that data according
-  to what it is.  Once you have that, there's unlimited ways of using
-  that information.
-
-</div>
-
-<div>
-
-  And what do you do with the data once you've extracted it?  You
-  probably don't personally have a way to use structured but abstract
-  data.  But the data is given a <em>type</em>, and we can search for
-  other services that can use that type of data, or you can find such
-  services yourself or, if you are a developer, develop such services.
-  As an example, contact information might go to a contact manager, or
-  be used to recreate friend networks on other services, or might be
-  archived for research purposes, or might be correlated with
-  information you've collected elsewhere.
-
-</div>
+<p> And what do you do with the data once you've extracted it?  You
+probably don't personally have a way to use structured but abstract
+data.  But the data is given a <em>type</em>, and we can search for
+other services that can use that type of data, or you can find such
+services yourself or, if you are a developer, develop such services.
+As an example, contact information might go to a contact manager, or
+be used to recreate friend networks on other services, or might be
+archived for research purposes, or might be correlated with
+information you've collected elsewhere.
+</p>
 
 </section>
 
@@ -148,65 +307,53 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
 
 <h2>Why Ad Hoc Extraction?</h2>
 
-<div>
+<p> This tool relies on individual users to write and maintain scripts
+to extract the structure from web pages.  The structure of pages
+on <span class="monospace">http://facebook.com</span> is different
+from the structure of pages
+on <span class="monospace">http://wikipedia.org</span>.  There's no
+standard way to represent different kinds of structured information.
+Or maybe there's <em>too many</em> standard ways.
+</p>
 
-  This tool relies on individual users to write and maintain scripts
-  to extract the structure from web pages.  The structure of pages
-  on <span class="monospace">http://facebook.com</span> is different
-  from the structure of pages
-  on <span class="monospace">http://wikipedia.org</span>.  There's no
-  standard way to represent different kinds of structured information.
-  Or maybe there's <em>too many</em> standard ways.
+<p> But then, shouldn't we build a standard way?  It's been tried
+before
+(<a href="http://en.wikipedia.org/wiki/Microformat">Microformats</a>,
+<a href="http://en.wikipedia.org/wiki/Resource_Description_Framework">RDF</a>,
+<a href="http://en.wikipedia.org/wiki/Facebook_Platform#Open_Graph_protocol">Open
+Graph Protocol</a>).  If you look at those links, you'll notice I
+linked to Wikipedia in each case, even though they each have an
+"official" page.  Why is Wikipedia so often a better reference
+location for a concept than a self-controlled and branded page?
+Because we (in the largest sense of "we") are usually better at
+describing each other than we are at describing ourselves.  When I
+describe myself, or when an institution describes itself, it can't
+help but confuse what it <em>is</em> with <em>what it hopes to be</em>
+or <em>what it plans to be</em>.  It's hard to be objective, to be
+grounded in the present, and ultimately the description is
+self-serving rather than serving the audience.
+</p>
 
-</div>
+<p> This is why I believe ad hoc scripts are not just the result of
+flaws in the current system, or of poor adoption of structured markup
+that should be fixed.  Ad hoc scripts are developed by people who want
+to <em>do</em> something.  Their goals are functional: they've found
+information they want to extract.  The authors of these scripts are
+also the audience.  The validity of their process is determined by the
+usefulness of the result.  I would go so far as to say that this
+should be the preferred foundation of semantics &mdash; knowledge
+structure is coherent in so far as it is useful.
+</p>
 
-<div>
-
-  But then, shouldn't we build a standard way?  It's been tried before
-  (<a href="http://en.wikipedia.org/wiki/Microformat">Microformats</a>,
-  <a href="http://en.wikipedia.org/wiki/Resource_Description_Framework">RDF</a>,
-  <a href="http://en.wikipedia.org/wiki/Facebook_Platform#Open_Graph_protocol">Open
-  Graph Protocol</a>).  If you look at those links, you'll notice I
-  linked to Wikipedia in each case, even though they each have an
-  "official" page.  Why is Wikipedia so often a better reference
-  location for a concept than a self-controlled and branded page?
-  Because we (in the largest sense of "we") are usually better at
-  describing each other than we are at describing ourselves.  When I
-  describe myself, or when an institution describes itself, it can't
-  help but confuse what it <em>is</em> with <em>what it hopes to
-  be</em> or <em>what it plans to be</em>.  It's hard to be objective,
-  to be grounded in the present, and ultimately the description is
-  self-serving rather than serving the audience.
-
-</div>
-
-<div>
-
-  This is why I believe ad hoc scripts are not just the result of
-  flaws in the current system, or of poor adoption of structured
-  markup that should be fixed.  Ad hoc scripts are developed by people
-  who want to <em>do</em> something.  Their goals are functional:
-  they've found information they want to extract.  The authors of
-  these scripts are also the audience.  The validity of their process
-  is determined by the usefulness of the result.  I would go so far as
-  to say that this should be the preferred foundation of semantics
-  &mdash; knowledge structure is corrent in so far as it is useful.
-
-</div>
-
-<div>
-
-  Microformats included an important design decision that I believe
-  this builds on: data is only correct when it is visible and used.
-  If data is hidden (e.g., embedded invisibly into the structure of
-  the page) then no one is checking to make sure it is correct or
-  useful.  While Microformats use this in a prescriptive way &mdash;
-  coming to the conclusion that semantic markup must wrap visible
-  elements &mdash; SeeItSaveIt uses this concept in a descriptive way:
-  the most useful information <em>is already visible and
-  parseable</em>.
-
-</div>
+<p> Microformats included an important design decision that I believe
+this builds on: data is only correct when it is visible and used.  If
+data is hidden (e.g., embedded invisibly into the structure of the
+page) then no one is checking to make sure it is correct or useful.
+While Microformats use this in a prescriptive way &mdash; coming to
+the conclusion that semantic markup must wrap visible elements &mdash;
+SeeItSaveIt uses this concept in a descriptive way: the most useful
+information <em>is already visible and parseable</em>.
+</p>
 
 </section>
 
@@ -214,9 +361,7 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
 
 <h2>The Politics of Modularity</h2>
 
-<div>
-
-  SeeItSaveIt modularizes the process with three basic components:
+<p> SeeItSaveIt modularizes the process with three basic components:
 
   <ol>
 
@@ -235,34 +380,29 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
 
   </ol>
 
-</div>
+</p>
 
-<div>
+<p> There are architectural and privacy reasons for this separation,
+but another significant reason is simple politics.  There was a time
+when it was common to give your credentials to sites, and they would
+log in as you and extract data or potentially do things.  There were
+quite a few problems with this, including Terms Of Service violations
+and services that took data users didn't realize they were taking, or
+were just buggy and messed things up.  Once you give a service access
+to log in as you, there's no end to what they can do.  Another very
+substantial reason for pushback against this technique is that
+services were using it to extract data so they could directly compete
+(this was particularly true when there was a lot of competition in the
+social space, something that has died down) &mdash; this offended some
+site owners, the integration wasn't symmetric, and often the
+competitors didn't fully clarify to users what they wanted to do with
+that data.
+</p>
 
-  There are architectural and privacy reasons for this separation, but
-  another significant reason is simple politics.  There was a time
-  when it was common to give your credentials to sites, and they would
-  log in as you and extract data or potentially do things.  There were
-  quite a few problems with this, including Terms Of Service
-  violations and services that took data users didn't realize they
-  were taking, or were just buggy and messed things up.  Once you give
-  a service access to log in as you, there's no end to what they can
-  do.  Another very substantial reason for pushback against this
-  technique is that services were using it to extract data so they
-  could directly compete (this was particularly true when there was a
-  lot of competition in the social space, something that has died
-  down) &mdash; this offended some site owners, the integration wasn't
-  symmetric, and often the competitors didn't fully clarify to users
-  what they wanted to do with that data.
-
-</div>
-
-<div>
-
-  The technique now for this kind of integration is OAuth, where one
-  service authenticates with both the user and the other site, and
-  uses published APIs to do very particular things.  With cooperative
-  sites this can be helpful, but it has some problems:
+<p> The technique now for this kind of integration is OAuth, where one
+service authenticates with both the user and the other site, and uses
+published APIs to do very particular things.  With cooperative sites
+this can be helpful, but it has some problems:
 
   <ol>
 
@@ -284,54 +424,49 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
 
   </ol>
 
-</div>
+</p>
 
-<div>
-
-  SeeItSaveIt's modularity addresses many of these concerns:
+<p> SeeItSaveIt's modularity addresses many of these concerns:
 
   <ol>
 
     <li> The Addon prepares the data in a relatively safe way, so that
-    read-only is given to the extracting script.  An extraction script
-    flaw will generally just lead to corrupt extracted data, not
-    anything done to the site itself (e.g., you can't post on behalf
-    of the user, just because a script is given access to read data
-    off Facebook's site).  This can mean privacy leaks, but there are
-    ways that we can mitigate that problem as well. </li>
+    only read access is given to the extracting script.  An extraction
+    script flaw will generally just lead to corrupt extracted data,
+    not anything done to the site itself (e.g., you can't post on
+    behalf of the user, just because a script is given access to read
+    data off Facebook's site).  This can mean privacy leaks, but there
+    are ways that we can mitigate that problem as well. </li>
 
     <li> The Addon runs <em>as</em> you, it sees exactly what you see.
     It doesn't send a URL to a server that then tries to reproduce and
     then extract content.  It doesn't have to ask any site's
     permission.  Because you have to explicitly start the extraction
-    process, user concent is concretely implied. </li>
+    process, user consent is concretely implied. </li>
 
     <li> The author of the extraction script is not (or at least
-    plausibly not) doing direct competition with the site.  The
+    plausibly not) in direct competition with the site.  The
     extraction script creates neutral data that can be consumed by
     anyone.  The data might be <em>particularly</em> useful to the
     extraction script author, but they ultimately have to enable
     anyone else to do useful things at the same time. </li>
 
-    <li> Consumers are the only ones who really get any data written,
-    and they only get fully extracted and baked content.  There are
-    several steps along the way where we can do auditing and
+    <li> Consumers are the only ones who really receive any data
+    written, and they only get fully extracted and baked content.
+    There are several steps along the way where we can do auditing and
     validation of the results, because we have neutral documents
     instead of these components chatting with each other in
     difficult-to-understand ways. </li>
 
   </ol>
 
-</div>
+</p>
 
-<div>
-
-  Because of these features I believe SeeItSaveIt is more politically
-  and technically palatable than previous systems where agents worked
-  on behalf of the user in a way that was indistinguishable from the
-  user.
-
-</div>
+<p> Because of these features I believe SeeItSaveIt is more
+politically and technically palatable than previous systems where
+agents worked on behalf of the user in a way that was
+indistinguishable from the user.
+</p>
 
 </section>
 
@@ -339,66 +474,57 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
 
 <h1>Development</h1>
 
-<div>
+<p> The source is <a href="https://github.com/ianb/seeitsaveit">on
+github</a>.  It uses the
+<a href="https://addons.mozilla.org/en-US/developers/">Addon SDK
+(aka Jetpack)</a>.  The source includes both the Addon and the
+server for registration and querying of extraction scripts, and
+development of new scripts.
+</p>
 
-  The source is <a href="https://github.com/ianb/seeitsaveit">on
-  github</a>.  It uses the
-  <a href="https://addons.mozilla.org/en-US/developers/">Addon SDK
-  (aka Jetpack)</a>.  The source includes both the Addon and the
-  server for registration and querying of extraction scripts, and
-  development of new scripts.
+<p> A quick guide to the
+code: <code>seeit-services/seeitservices/</code> is a simple server to
+support the querying and development of new code.  The extraction
+script development part is in <code>seeit-services/seeitservices//develop.py</code>
+and <code>seeit-services/seeitservices/static-develop/</code>.  You can
+run <code>seeit-services/run-server.py</code> and you shouldn't need to install anything.
+</p>
 
-</div>
-
-<div>
-
-  A quick guide to the code: <code>server/server.py</code> is a simple
-  server to support the querying and development of new code.  The
-  develop part is in <code>server/develop.py</code>
-  and <code>server/static/develop/</code>.  You can
-  run <code>server.py</code> and you shouldn't need to install
-  anything.
-
-</div>
-
-<div>
-
-  The addon is in <code>lib/</code> and <code>data/</code>,
-  which <code>lib/main.js</code> doing the bulk of the work.  Use
-  the <code>cfx</code> tool in Jetpack/Addon-SDK to build the code
-  into an .xpi addon.
-
-</div>
+<p> The addon is in <code>lib/</code> and <code>data/</code>,
+with <code>lib/main.js</code> doing the bulk of the work.  Use
+the <code>cfx</code> tool in Jetpack/Addon-SDK to build the code into
+an .xpi addon.
+</p>
 
 </section>
 
 <section id="howwork">
 
-<h1>How Does It Work?</h1>
+<h1>How Does It Work?  The Details</h1>
 
-<div>
-
-  The basic steps:
+<p> The basic steps:
 
   <ol>
 
     <li> The user indicates they want to extract information from the
     page, by pressing that <img style="height: 1em; padding: 0 0.3em 0
-    0.3em" src="static/box-download.png"> link. </li>
+    0.3em" src="static/box-download.png"> button. </li>
 
     <li> The page is copied and serialized.  This process eliminates
     parts of the page that make it interactive, but aren't important
     to its appearance at that moment.  Things
     like <code>&lt;script></code> tags are removed. Links are made
     absolute when it's clear that something is a link, though
-    a <code>&lt;base href></code> tag are still generally necessary.
+    a <code>&lt;base href></code> tag is still generally necessary.
     Things like external CSS files are left as-is, but iframes and
     canvas elements are made static. </li>
 
     <li> While the serialization is happening, we also ask the server
     if there are extracting scripts that work for the given URL.  We
     ask for consumers that go with the output of those extractors at
-    the same time.  The user chooses an extractor. </li>
+    the same time.  The user chooses where they want data sent, given
+    the subset of consumers that take data that some extractor
+    produces. </li>
 
     <li> We turn that whole serialized page into a <code>data:</code>
     URL.  We also add the extractor script to the page, and any
@@ -416,15 +542,13 @@ href="/static/seeitsaveit.xpi">install the Addon</a></div>
     result object, along with some information about the original
     document (such as its URL). </li>
 
-    <li> We see which consumers match the type of the result, and let
-    the user pick amongst those consumers. </li>
-
-    <li> We send a POST request to the consumer with the extracted
-    data, and display the result of that to the user. </li>
+    <li> We send a POST request to the consumer which the user
+    selected, with the extracted data, and display the result of that
+    to the user. Alternately we can send a kind of postMessage. </li>
 
   </ol>
 
-</div>
+</p>
 
 </section>
 

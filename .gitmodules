@@ -16,3 +16,12 @@
 [submodule "seeit-services/seeitservices/static-develop/ace"]
 	path = seeit-services/seeitservices/static-develop/ace
 	url = git://github.com/ajaxorg/ace.git
+[submodule "seeit-services/submodules/123done"]
+	path = seeit-services/submodules/123done
+	url = git@github.com:ianb/123done.git
+[submodule "seeit-services/submodules/todomvc"]
+	path = seeit-services/submodules/todomvc
+	url = git@github.com:ianb/todomvc.git
+[submodule "seeit-services/submodules/thecutout"]
+	path = seeit-services/submodules/thecutout
+	url = https://github.com/ianb/thecutout.git
