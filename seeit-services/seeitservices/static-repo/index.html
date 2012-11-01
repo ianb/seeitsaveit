@@ -6,9 +6,6 @@
   <link href="/develop/bootstrap/css/bootstrap.css" rel="stylesheet">
   <link href="homepage.css" rel="stylesheet">
   <style>
-    body {
-      padding-top: 60px;
-    }
     section {
       padding-top: 60px;
     }
@@ -20,19 +17,26 @@
  <div class="navbar-inner">
   <div class="container">
     <a href="/" class="brand">SeeItSaveIt</a>
-    <ul class="nav nav-tabs">
+    <ul class="nav">
      <li><a href="https://github.com/ianb/seeitsaveit">Github</a></li>
-     <li class="dropdown" id="manifesto-menu">
-      <a class="dropdown-toggle" data-toggle="dropdown" href="#manifesto-menu">Manifesto
+     <li class="dropdown" id="toc-menu">
+      <a class="dropdown-toggle" data-toggle="dropdown" href="#toc-menu">Table Of Contents
        <b class="caret"></b></a>
       <ul class="dropdown-menu">
-       <li><a href="#manifesto">A Manifesto</a></li>
-       <li><a href="#why">Why?</a></li>
-       <li><a href="#adhoc">Why Ad Hoc?</a></li>
-       <li><a href="#modularity">Modularity</a></li>
+       <li><a href="#intro">About SeeItSaveIt</a></li>
+       <li><a href="#how">How it works</a></li>
+       <li><a href="#manifesto">A Manifesto</a>
+         <ul>
+          <li><a href="#why">Why?</a></li>
+          <li><a href="#adhoc">Why Ad Hoc?</a></li>
+          <li><a href="#modularity">Modularity</a></li>
+        </ul>
+       </li>
+       <li><a href="#development">Development/Contributing</a></li>
+       <li><a href="#howwork">How does it work/Technical</a></li>
       </ul>
      </li>
-     <li><a href="#development">Development</a></li>
+     <li><a href="/static/seeitsaveit.xpi">Install the Add-on!</a></li>
     </ul>
   </div> <!-- .container -->
  </div> <!-- .navbar-inner -->
@@ -42,11 +46,12 @@
 
 <section id="intro">
 
-<p> SeeItSaveIt is an Addon for Firefox that extracts structured
+<p style="padding: 0 4em 0 4em; font-size: 120%; line-height: 190%">
+SeeItSaveIt is an Addon for Firefox that extracts structured
 information from web pages, and sends it to services that can use that
-data.  It does this using ad hoc, user-contributed scripts.  </div>
+data. </p>
 
-<h1>Wait, what?</h1>
+<h1>What's that?</h1>
 
 <p> Let's say you are looking at a website, and you see
 some <em>data</em> you'd like to use.  What kind of data?  Maybe it's
@@ -110,7 +115,7 @@ more here</a>).</p>
 <h1>How does this work?</h1>
 
 <p>What follows will be a technical discussion of what SeeItSaveIt
-does.  In <a href="#manifest">the manifesto</a> is a description
+does.  In <a href="#manifesto">the manifesto</a> is a description
 of <em>why</em>.</p>
 
 <h2>Crowdsourcing parsing</h2>
@@ -472,7 +477,7 @@ indistinguishable from the user.
 
 <section id="development">
 
-<h1>Development</h1>
+<h1>Development / Contributing</h1>
 
 <p> The source is <a href="https://github.com/ianb/seeitsaveit">on
 github</a>.  It uses the
