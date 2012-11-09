@@ -20,12 +20,22 @@ class DispatcherApp(object):
 
     @wsgify
     def __call__(self, req):
+        ## Another hack for Petri (https://bugzilla.mozilla.org/show_bug.cgi?id=807796)
+        file_wrapper = None
+        if 'wsgi.file_wrapper' in req.environ:
+            file_wrapper = req.environ.pop('wsgi.file_wrapper')
+        if not file_wrapper:
+            return self.respond
+        else:
+            resp = req.send(self.respond)
+            req.environ['wsgi.file_wrapper'] = file_wrapper
+            return resp
+
+    @wsgify
+    def respond(self, req):
         ## Hack for Petri
         if req.headers.get('X-SSL', '').lower() == 'on':
             req.scheme = 'https'
-        ## Another hack for Petri (https://bugzilla.mozilla.org/show_bug.cgi?id=807796)
-        if 'wsgi.file_wrapper' in req.environ:
-            del req.environ['wsgi.file_wrapper']
         self.set_auth(req)
         req.root = (req.application_url, self)
         if req.path_info == '/auth':
