@@ -116,7 +116,7 @@ if (localStorage.getItem('Auth.cachedData') && localStorage.getItem('Auth.cached
 
 // FIXME: protect against https://browserid.org/include.js being included after this script?
 navigator.id.watch({
-  loggedInEmail: Auth.email,
+  loggedInUser: Auth.email,
   onlogin: function (assertion) {
     var req = new XMLHttpRequest();
     req.open('POST', Auth.authUrl);
