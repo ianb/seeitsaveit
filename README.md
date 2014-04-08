@@ -1,7 +1,7 @@
 This is the SeeItSaveIt add-on.
 
 See
-[seeitsaveit.vcap.mozillalabs.com](https://seeitsaveit.vcap.mozillalabs.com)
+[ianb.github.io/seeitsaveit](https://ianb.github.io/seeitsaveit)
 for a more detailed end-user explanation.
 
 This addon helps extraction scripts.  The scrapers *act on what you
